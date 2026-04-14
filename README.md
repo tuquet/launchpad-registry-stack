@@ -74,3 +74,15 @@ docker pull <SERVER_IP>:5000/my-app:v1
    docker exec docker-registry bin/registry garbage-collect /etc/docker/registry/config.yml
    ```
 3. **Storage Cleanup:** Ensure `REGISTRY_STORAGE_DELETE_ENABLED` is set to `true` in `docker-compose.yml` to allow the UI to delete images.
+
+---
+
+## 🌌 The LaunchPad Ecosystem
+
+This project is part of the **LaunchPad** ecosystem—a complete suite of boilerplates designed for high-performance, production-ready development. Check out the other repositories to complete your stack:
+
+- 📱 [**LaunchPad Mobile Native**](https://github.com/tuquet/launchpad-mobile-native): A React Native/Expo mobile app boilerplate configured for seamless Strapi integration.
+- 💻 [**LaunchPad CMS Fullstack**](https://github.com/tuquet/launchpad-cms-fullstack): A full-stack starter kit combining Next.js (Frontend) and Strapi 5 (Headless CMS) with Docker support.
+- 🐳 [**LaunchPad Registry Stack**](https://github.com/tuquet/launchpad-registry-stack): A lightweight, self-hosted private Docker Registry with Web UI to streamline your CI/CD and save VPS resources.
+
+⭐️ **If you find this ecosystem useful, please consider giving the repositories a star on GitHub!**
