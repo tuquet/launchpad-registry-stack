@@ -11,7 +11,7 @@ services:
       - "5000:5000"
     volumes:
       # Config YAML được mount vào thay vì dùng environment variables
-      - ./config/registry-config.yml:/etc/docker/registry/config.yml:ro
+      - ./registry/config/registry-config.yml:/etc/docker/registry/config.yml:ro
       # Thư mục lưu trữ images
       - ./data:/var/lib/registry
       # File xác thực htpasswd

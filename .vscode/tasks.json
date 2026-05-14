@@ -22,9 +22,21 @@
       "problemMatcher": []
     },
     {
-      "label": "🚀 registry: up",
+      "label": "🚀 registry: up (HTTP)",
       "type": "shell",
       "command": "docker compose up -d",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "group": "registry"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔒 registry: up (HTTPS)",
+      "type": "shell",
+      "command": "docker compose -f docker-compose.ssl.yml up -d",
       "group": "build",
       "presentation": {
         "reveal": "always",
@@ -76,6 +88,36 @@
         "panel": "new"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "🔒 ssl: init",
+      "type": "shell",
+      "command": "chmod +x scripts/init-ssl.sh && REGISTRY_DOMAIN=${input:domain} CERTBOT_EMAIL=${input:email} ./scripts/init-ssl.sh",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🛡️ firewall: setup",
+      "type": "shell",
+      "command": "chmod +x scripts/setup-ufw.sh && ./scripts/setup-ufw.sh ${input:fwMode}",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🛡️ firewall: status",
+      "type": "shell",
+      "command": "sudo ufw status verbose",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
     }
   ],
   "inputs": [
@@ -89,6 +131,25 @@
       "id": "pass",
       "type": "promptString",
       "description": "New Registry Password"
+    },
+    {
+      "id": "domain",
+      "type": "promptString",
+      "description": "Registry Domain (e.g. hub.example.com)",
+      "default": "hub.example.com"
+    },
+    {
+      "id": "email",
+      "type": "promptString",
+      "description": "Certbot Email",
+      "default": "you@email.com"
+    },
+    {
+      "id": "fwMode",
+      "type": "pickString",
+      "description": "Firewall mode",
+      "options": ["http", "https"],
+      "default": "https"
     }
   ]
 }

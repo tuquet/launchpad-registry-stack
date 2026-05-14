@@ -19,7 +19,7 @@ services:
     expose:
       - "5000"
     volumes:
-      - ./config/registry-config.yml:/etc/docker/registry/config.yml:ro
+      - ./registry/config/registry-config.yml:/etc/docker/registry/config.yml:ro
       - ./data:/var/lib/registry
       - ./auth:/auth
 
