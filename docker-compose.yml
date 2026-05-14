@@ -28,8 +28,12 @@ services:
     ports:
       - "5001:80"
     environment:
-      - REGISTRY_URL=http://registry:5000
+      # Dùng NGINX_PROXY_PASS_URL thay vì REGISTRY_URL
+      # → UI proxy request server-side qua nginx nội bộ
+      # → Tránh CORS và browser không resolve được Docker hostname
+      - NGINX_PROXY_PASS_URL=http://registry:5000
       - DELETE_IMAGES=true
+      - SINGLE_REGISTRY=true
       - REGISTRY_TITLE=Private Docker Registry
     depends_on:
       - registry
