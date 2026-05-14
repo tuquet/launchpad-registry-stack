@@ -7,17 +7,17 @@
 
 ## Tổng quan
 
-**Nginx UI** là giải pháp all-in-one thay thế 2 module cũ (Nginx config thủ công + Certbot container):
+**Nginx UI** là giải pháp quản trị Nginx và SSL Certificate all-in-one thông qua giao diện web hiện đại.
 
-| Tính năng | Trước (thủ công) | Sau (Nginx UI) |
-|:----------|:-----------------|:----------------|
-| Nginx Config | Sửa file `.conf` + SSH | GUI Block Editor + Ace Code Editor |
-| SSL Certificate | `init-ssl.sh` + Certbot loop 12h | One-click Let's Encrypt + Auto-renew |
-| Config Backup | Git manual | Tự động backup + diff + rollback |
-| Server Monitoring | Không có | CPU, RAM, Disk, Load — real-time |
-| Log Viewer | `tail -f` qua SSH | Online log viewer |
-| Config Reload | `nginx -t && nginx -s reload` | Tự động test + reload sau save |
-| Terminal | SSH client riêng | Web Terminal tích hợp |
+| Tính năng chính | Mô tả |
+|:----------|:----------------|
+| Nginx Config | Cấu hình qua GUI Block Editor hoặc Ace Code Editor có syntax highlighting |
+| SSL Certificate | Tích hợp Let's Encrypt, cấp phát 1 click và tự động gia hạn |
+| Config Backup | Tự động backup, so sánh (diff) và rollback cấu hình |
+| Server Monitoring | Theo dõi CPU, RAM, Disk, Load average theo thời gian thực |
+| Log Viewer | Xem Access Log và Error Log trực tiếp trên web |
+| Tự động Reload | Tự động test file config và reload Nginx sau khi lưu |
+| Web Terminal | Tích hợp SSH Terminal ngay trong trình duyệt |
 
 > **📦 Docker Image:** `uozi/nginx-ui:latest` — đã bao gồm Nginx bên trong. Distribute dưới dạng single container.
 
@@ -118,17 +118,32 @@ server {
 }
 ```
 
-### Bước 5: Bật SSL (One-click)
+### Bước 5: Đăng ký SSL Certificate (Let's Encrypt)
 
-1. Trong Nginx UI, vào site config vừa tạo
-2. Nhấn **"Enable SSL"** hoặc **"Certificate"** tab
-3. Chọn **Let's Encrypt** → Nhập email → **Issue**
-4. Nginx UI tự động:
-   - Lấy certificate từ Let's Encrypt
-   - Cấu hình HTTPS + HTTP→HTTPS redirect
-   - Setup auto-renewal
+Để sử dụng HTTPS, bạn cần cấp phát SSL Certificate. Đảm bảo **Domain đã trỏ về IP của VPS** và **port 80/443 đã được mở** trên Firewall.
 
-> **✅ Xong!** Không cần script, không cần Certbot container, không cần cron job.
+**Cách 1: Issue SSL thông qua Site Config (Khuyến nghị)**
+1. Mở Nginx UI, vào mục **Manage Sites**.
+2. Chọn Site Config của Registry (vừa tạo ở bước 4).
+3. Chuyển sang tab **Certificate**.
+4. Chọn tuỳ chọn **Let's Encrypt** (hoặc nhấn nút "Issue Certificate").
+5. Nhập các thông tin cần thiết:
+   - **Domain:** `hub.example.com` (Sẽ tự động điền theo server_name)
+   - **Email:** Nhập email của bạn (Ví dụ: `admin@example.com`)
+   - **Challenge Method:** Để mặc định là `HTTP-01` (Nginx UI sẽ tự lo phần cấu hình route `.well-known`).
+6. Nhấn **Issue** và đợi khoảng 15-30 giây.
+7. Sau khi cấp phát thành công, Nginx UI sẽ tự động cấu hình đường dẫn tới cert/key và tự động tạo rule redirect HTTP sang HTTPS.
+8. Bật toggle **Enable SSL** và nhấn **Save** cấu hình.
+
+**Cách 2: Issue SSL độc lập qua menu Certificates**
+1. Mở sidebar, chọn mục **Certificates**.
+2. Nhấn nút **Add Certificate**.
+3. Chọn Provider là **Let's Encrypt**.
+4. Nhập Domain và Email tương tự cách 1.
+5. Nhấn **Save / Issue**. Nginx UI sẽ lấy chứng chỉ về máy.
+6. Sau đó, quay lại phần **Manage Sites**, mở config của bạn và chọn chứng chỉ vừa tạo từ dropdown list ở mục SSL.
+
+> **✅ Xong!** Chứng chỉ Let's Encrypt sẽ tự động được Nginx UI theo dõi và gia hạn (renew) khi sắp hết hạn (thường là trước 30 ngày). Bạn không cần cấu hình thêm cronjob.
 
 ---
 
@@ -250,21 +265,6 @@ nginx-ui/
 | `504 Gateway Timeout` | Tăng `proxy_read_timeout` lên 900s+ |
 | SSL không issue được | Kiểm tra domain DNS trỏ đúng, port 80 mở |
 | Nginx UI quên password | `docker exec registry-nginx-ui nginx-ui reset-password` |
-
----
-
-## So sánh với cách cũ
-
-| Tiêu chí | Cách cũ (Nginx + Certbot) | Cách mới (Nginx UI) |
-|:---------|:--------------------------|:---------------------|
-| Số containers | 4 (registry, ui, nginx, certbot) | 3 (registry, ui, nginx-ui) |
-| SSL Setup | Script `init-ssl.sh` + Certbot | One-click trong UI |
-| Config Edit | SSH + vim/nano | Browser GUI |
-| Config Backup | Manual Git | Auto backup + diff |
-| Monitoring | Không có | Real-time dashboard |
-| Log Viewer | `tail -f` qua SSH | Online viewer |
-| Renewal | Certbot loop 12h + cron restart | Tự động hoàn toàn |
-| Khả năng scale | Single node | Cluster management |
 
 ---
 
