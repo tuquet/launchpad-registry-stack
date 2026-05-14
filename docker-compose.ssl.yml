@@ -69,7 +69,9 @@ services:
       # Static files nếu cần serve
       - ./nginx-ui/www:/var/www
       # Docker socket — cho server monitoring
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Linux: /var/run/docker.sock:/var/run/docker.sock
+      # Windows Docker Desktop: //./pipe/docker_engine:/var/run/docker.sock
+      - //var/run/docker.sock:/var/run/docker.sock
     environment:
       - TZ=Asia/Ho_Chi_Minh
     depends_on:
