@@ -25,27 +25,31 @@
 
 ## Kiến trúc
 
-```text
-                          ┌─────────────────────┐
-                          │     Internet         │
-                          └─────────┬───────────┘
-                                    │
-                          ┌─────────▼───────────┐
-                          │   Nginx UI           │
-                          │   Port 80/443        │
-                          │   ┌───────────────┐  │
-                          │   │ Nginx (proxy)  │  │
-                          │   │ Let's Encrypt  │  │
-                          │   │ Web UI (:9000) │  │
-                          │   └───────┬───────┘  │
-                          └───────────┼──────────┘
-                                      │
-                      ┌───────────────┼───────────────┐
-                      │                               │
-            ┌─────────▼─────────┐           ┌────────▼────────┐
-            │ /v2/*              │           │ /*               │
-            │ Registry API :5000 │           │ Registry UI :80  │
-            └───────────────────┘           └─────────────────┘
+```mermaid
+flowchart TD
+    INET((🌐 Internet))
+
+    subgraph NGINX_UI ["🔀 Nginx UI (Port 80/443)"]
+        direction TB
+        PROXY("🔄 Nginx Proxy")
+        SSL("🔒 Let's Encrypt")
+        WEB("💻 Web UI Panel")
+    end
+
+    INET -- HTTP/HTTPS --> PROXY
+
+    subgraph BACKEND ["📦 Internal Stack"]
+        direction LR
+        API("🐳 Registry API<br/>(:5000)")
+        UI("🖥️ Registry UI<br/>(:80)")
+    end
+
+    PROXY -- "Route: /v2/*" --> API
+    PROXY -- "Route: /*" --> UI
+
+    style INET fill:transparent,stroke:#888,stroke-dasharray: 5 5
+    style NGINX_UI fill:transparent,stroke:#0d6efd,stroke-width:2px
+    style BACKEND fill:transparent,stroke:#198754,stroke-width:2px
 ```
 
 ---

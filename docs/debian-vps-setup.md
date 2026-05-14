@@ -6,16 +6,22 @@ Tài liệu này hướng dẫn thiết lập VPS Debian từ đầu. Mỗi bư�
 
 ## 🗺️ Tổng quan Flow
 
-```
-┌─────────────────────────────┐          ┌─────────────────────────────┐
-│     A: PC CÁ NHÂN           │          │     B: VPS PRODUCTION       │
-│                             │          │                             │
-│  ✅ Clone cms-fullstack      │          │  ✅ Clone registry-stack     │
-│  ✅ Code + Test locally      │          │  ✅ Clone cms-fullstack      │
-│  ✅ Build Docker images      │          │  ✅ Chạy Registry            │
-│  ✅ Push lên Registry của B  │─────────▶│  ✅ Pull images từ Registry  │
-│                             │          │  ✅ docker compose prod up   │
-└─────────────────────────────┘          └─────────────────────────────┘
+```mermaid
+sequenceDiagram
+    participant PC as 💻 PC CÁ NHÂN
+    participant VPS as 🚀 VPS PRODUCTION
+    
+    Note over PC: 1. Clone cms-fullstack
+    Note over PC: 2. Code + Test locally
+    Note over PC: 3. Build Docker images
+    
+    Note over VPS: 1. Clone registry-stack
+    Note over VPS: 2. Chạy Private Registry
+    Note over VPS: 3. Clone cms-fullstack
+    
+    PC->>VPS: 4. Push lên Registry
+    VPS->>VPS: 5. Pull images từ local Registry
+    VPS->>VPS: 6. docker compose prod up
 ```
 
 ---

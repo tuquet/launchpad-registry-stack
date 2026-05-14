@@ -12,19 +12,21 @@ Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy (GUI
 │                                                                  │
 │  ┌─────────────┐   ┌──────────────────────────────────────────┐ │
 │  │ 🛡️ Firewalld│   │ 🔀 Nginx UI                             │ │
-│  │ Firewall    │──▶│ Reverse Proxy + SSL + Monitoring         │ │
+│  │ + Cockpit   │─▶│ Reverse Proxy + SSL + Monitoring         │ │
 │  │ Port Guard  │   │ GUI Config Editor + Web Terminal          │ │
-│  └─────────────┘   │ Let's Encrypt Auto-Renew                 │ │
-│                     │ Port 80/443                               │ │
-│                     └──────────────┬───────────────────────────┘ │
+│  │ Web UI:9090 │   │ Let's Encrypt Auto-Renew                 │ │
+│  └─────────────┘   │ Port 80/443                               │ │
+│                     └──────────────┼───────────────────────┘ │
 │                                    │                              │
-│                       ┌────────────┼────────────┐                │
+│                       ┌───────────┼────────────┐                │
 │                       │                         │                │
-│             ┌─────────▼─────────┐    ┌──────────▼──────────┐    │
+│             ┌─────────▼───────┐    ┌─────────▼──────────┐    │
 │             │ 🐳 Registry API   │    │ 🖥️ Registry UI      │    │
 │             │ Push/Pull Images  │    │ Web Management       │    │
 │             │ Port 5000 (int)   │    │ Port 80 (int)        │    │
-│             └───────────────────┘    └─────────────────────┘    │
+│             └───────────────────┘    └────────────────────┘    │
+│                                                                  │
+│  📄 Dozzle (5MB): Log viewer │ 🔄 Watchtower (10MB): Auto-update │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -54,30 +56,13 @@ Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy (GUI
 ├── docker-compose.ssl.yml                 ← HTTPS mode (production, Nginx UI)
 │
 ├── nginx-ui/                              ← [Module 1] Nginx UI (runtime, gitignored)
-│   ├── nginx/                             ← Nginx config (auto-managed)
-│   ├── data/                              ← Nginx UI database + settings
-│   └── www/                               ← Static files
-│
 ├── firewall/                              ← [Module 2] Firewalld Configuration
-│   └── README.md
-│
 ├── registry/                              ← [Module 3] Docker Registry
-│   ├── README.md
-│   └── config/
-│       └── registry-config.yml            ← Registry config (mount vào container)
 │
-├── auth/                                  ← Registry auth (gitignored)
-│   └── registry.password
+├── install.sh                             ← 🚀 One-Click Installer
 │
 ├── scripts/                               ← Automation scripts
-│   └── setup-cockpit.sh                  ← Cài đặt Cockpit & Firewalld
-│
 ├── docs/                                  ← Tài liệu chuyên sâu
-│   ├── nginx-ui.md                       ← Nginx UI setup & management
-│   ├── firewall-cockpit.md               ← Module 2 docs
-│   ├── docker-registry.md               ← Module 3 docs
-│   └── debian-vps-setup.md             ← Hướng dẫn setup VPS từ đầu
-│
 └── data/                                  ← Registry data (gitignored)
 ```
 
@@ -100,29 +85,14 @@ docker compose up -d
 # Registry UI:   http://localhost:5001
 ```
 
-### Chế độ HTTPS (Production / Có domain — Nginx UI)
+### Chế độ HTTPS (Production / Có domain)
 
 ```bash
-# 1. Tạo auth
-mkdir -p auth
-docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn admin <MẬT_KHẨU> > auth/registry.password
-
-# 2. Cấu hình Firewall & Server Management
-chmod +x scripts/setup-cockpit.sh && ./scripts/setup-cockpit.sh
-
-# 3. Khởi chạy stack (Nginx UI + Registry)
-docker compose -f docker-compose.ssl.yml up -d
-
-# 4. Lấy Install Secret và hoàn tất web setup
-docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret
-# → Truy cập http://<IP>:80 → Nhập secret → Tạo admin account
-
-# 5. Trong Nginx UI: tạo site config + bật SSL (one-click Let's Encrypt)
-# → Chi tiết: docs/nginx-ui.md
-
-# 6. Đăng nhập Registry
-docker login hub.example.com
+# 1 lệnh duy nhất — script tự động lo tất cả:
+chmod +x install.sh && ./install.sh
 ```
+
+> **Hoặc cài đặt thủ công theo từng bước:** xem [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ---
 
@@ -155,6 +125,8 @@ docker login hub.example.com
 | 🔄 Cluster | Mirror config tới nhiều VPS node |
 | 📤 Config Export | Export encrypted cho recovery |
 | 🤖 MCP | AI agents tương tác trực tiếp với Nginx |
+| 📄 Dozzle | Xem log container realtime qua Web (~5MB RAM) |
+| 🔄 Watchtower | Tự động cập nhật image mới lúc 4AM hàng ngày (~10MB RAM) |
 
 ---
 

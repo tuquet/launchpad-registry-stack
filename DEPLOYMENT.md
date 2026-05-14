@@ -6,11 +6,18 @@ Quy trình này được tối ưu cho **Tech Lead** triển khai trên VPS có 
 
 ## 🏗️ Kiến trúc triển khai
 
-```text
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Máy Local/CI   │────▶│ Private Registry  │◀────│   VPS (Prod)    │
-│  Build + Push   │     │  Lưu trữ Images  │     │  Pull + Run     │
-└─────────────────┘     └──────────────────┘     └─────────────────┘
+```mermaid
+flowchart LR
+    LOCAL("💻 Máy Local / CI<br/>Build + Push")
+    REG("📦 Private Registry<br/>Lưu trữ Images")
+    VPS("🚀 VPS (Prod)<br/>Pull + Run")
+
+    LOCAL -- Push --> REG
+    VPS -- Pull --> REG
+
+    style LOCAL fill:transparent,stroke:#0d6efd,stroke-width:2px
+    style REG fill:transparent,stroke:#198754,stroke-width:2px
+    style VPS fill:transparent,stroke:#dc3545,stroke-width:2px
 ```
 
 ---

@@ -6,6 +6,13 @@
 #   - One-click Let's Encrypt SSL + Auto-renew
 #   - Server monitoring, log viewer, web terminal
 #
+# Services:
+#   - registry       → Docker Registry (private image store)
+#   - registry-ui    → Web UI quản lý Registry
+#   - nginx-ui       → Reverse proxy + SSL + Server monitoring
+#   - dozzle         → Xem log container realtime (~5MB RAM)
+#   - watchtower     → Tự động update images (~10MB RAM)
+#
 # Khởi chạy:  docker compose -f docker-compose.ssl.yml up -d
 # Nginx UI:   http://<IP>:80 → hoàn tất setup lần đầu
 # =============================================================================
@@ -26,6 +33,8 @@ services:
       - ./registry/config/registry-config.yml:/etc/docker/registry/config.yml:ro
       - ./data:/var/lib/registry
       - ./auth:/auth
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   # ============================================
   # Registry UI - Giao diện quản lý Registry
@@ -45,6 +54,8 @@ services:
       - REGISTRY_TITLE=Private Docker Registry
     depends_on:
       - registry
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   # ============================================
   # Nginx UI — Quản trị Nginx + SSL + Monitoring
@@ -69,11 +80,55 @@ services:
       # Static files nếu cần serve
       - ./nginx-ui/www:/var/www
       # Docker socket — cho server monitoring
-      # Linux: /var/run/docker.sock:/var/run/docker.sock
-      # Windows Docker Desktop: //./pipe/docker_engine:/var/run/docker.sock
-      - //var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TZ=Asia/Ho_Chi_Minh
     depends_on:
       - registry
       - registry-ui
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ============================================
+  # Dozzle — Xem log container realtime qua Web
+  #
+  # RAM: ~5MB | Không lưu log, chỉ stream realtime
+  # Truy cập nội bộ: http://dozzle:8080
+  # Cấu hình proxy trong Nginx UI → /logs hoặc subdomain
+  # ============================================
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: registry-dozzle
+    restart: always
+    expose:
+      - "8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - DOZZLE_NO_ANALYTICS=true
+      - DOZZLE_LEVEL=info
+    depends_on:
+      - registry
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ============================================
+  # Watchtower — Tự động update Docker Images
+  #
+  # RAM: ~10MB | Chạy nền, check lúc 4:00 AM
+  # Chỉ update container có label watchtower.enable=true
+  # Tự động xóa image cũ sau khi update
+  # ============================================
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: registry-watchtower
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_DEBUG=false
+      - WATCHTOWER_NOTIFICATIONS_LEVEL=info
