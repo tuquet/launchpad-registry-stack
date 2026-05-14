@@ -1,102 +1,201 @@
-# 🚀 LaunchPad Deployment Guide (Low Resource Optimization)
+# 🚀 Hướng dẫn Triển khai (Tối ưu cho VPS tài nguyên thấp)
 
-This workflow is optimized for **Tech Leads** deploying to VPS environments with limited CPU/RAM. Instead of building on the VPS (which causes crashes and high latency), we use a **Local Build & Push** strategy.
+Quy trình này được tối ưu cho **Tech Lead** triển khai trên VPS có CPU/RAM hạn chế. Thay vì build trực tiếp trên VPS (dễ gây crash và lag), chúng ta dùng chiến lược **Build tại máy local → Push lên Registry → Pull trên VPS**.
 
-## 🏗️ Deployment Architecture
+## 🏗️ Kiến trúc triển khai
 
-1.  **Local Machine/CI:** Build Docker images.
-2.  **Private Registry:** Store images securely.
-3.  **Production VPS:** Only pulls and runs (Zero build overhead).
+```text
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Máy Local/CI   │────▶│ Private Registry  │◀────│   VPS (Prod)    │
+│  Build + Push   │     │  Lưu trữ Images  │     │  Pull + Run     │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+```
+
+1. **Máy Local / CI:** Build Docker images (tốn CPU/RAM ở đây).
+2. **Private Registry:** Lưu trữ images an toàn (port `5000`).
+3. **VPS Production:** Chỉ pull và chạy — không build gì cả.
 
 ---
 
-## 📦 1. Setup Your Private Registry
+## 📦 Phần 1: Cài đặt Private Registry
 
-First, initialize your registry on the VPS or a dedicated storage server.
+Thực hiện trên VPS hoặc server lưu trữ riêng.
 
-### Generate Auth
+### Bước 1.1: Clone dự án
+
 ```bash
-mkdir -p auth
-docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn <user> <password> > auth/registry.password
+git clone https://github.com/tuquet/launchpad-registry-stack.git
+cd launchpad-registry-stack
 ```
 
-### Launch Registry & UI
+### Bước 1.2: Tạo file xác thực
+
+```bash
+mkdir -p auth
+docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn <tên_user> <mật_khẩu> > auth/registry.password
+```
+
+> **💡 Ví dụ:**
+> ```bash
+> docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn admin SecurePass123 > auth/registry.password
+> ```
+
+### Bước 1.3: (Tuỳ chọn) Chỉnh sửa cấu hình Registry
+
+Mở file `config/registry-config.yml` để tuỳ chỉnh nếu cần:
+- Thay đổi log level
+- Cấu hình CORS headers
+- Bật/tắt tính năng xóa image
+- Thiết lập health check
+
+### Bước 1.4: Khởi chạy Registry
+
 ```bash
 docker compose up -d
 ```
-Access the UI at `http://<SERVER_IP>:8080`.
+
+**Kiểm tra:**
+- Registry API: `http://<IP_SERVER>:5000/v2/_catalog` (cần xác thực)
+- Registry UI: `http://<IP_SERVER>:5001`
 
 ---
 
-## 🛠️ 2. Build & Push Workflow (Local/CI)
+## 🛠️ Phần 2: Build và Push (Thực hiện trên máy Local / CI)
 
-Perform these steps on your powerful local machine or CI pipeline to avoid taxing the VPS.
+Đây là bước tốn nhiều CPU/RAM nhất — luôn thực hiện trên máy mạnh, **KHÔNG làm trên VPS**.
 
-### Step 1: Login to Registry
-```bash
-docker login <REGISTRY_DOMAIN_OR_IP>:5000
-```
-*(If using HTTP without Nginx, add the IP to `insecure-registries` in `daemon.json`)*
-
-### Step 2: Build and Tag Images
-Navigate to your [strapi-docker-boilerplate](https://github.com/tuquet/strapi-docker-boilerplate) folder:
+### Bước 2.1: Đăng nhập vào Registry
 
 ```bash
-# Build Strapi Image
-docker build -t <REGISTRY_IP>:5000/strapi-app:v1 ./strapi
-
-# Build Next.js Image
-docker build -t <REGISTRY_IP>:5000/next-app:v1 ./next
+docker login <IP_REGISTRY>:5000
 ```
 
-### Step 3: Push to Registry
+> **⚠️ Lưu ý HTTP:** Nếu chưa cài SSL, cần thêm vào `daemon.json`:
+> ```json
+> {
+>   "insecure-registries": ["<IP_REGISTRY>:5000"]
+> }
+> ```
+> Sau đó restart Docker: `sudo systemctl restart docker`
+
+### Bước 2.2: Build và đánh tag images
+
+Di chuyển tới thư mục project [strapi-docker-boilerplate](https://github.com/tuquet/strapi-docker-boilerplate):
+
 ```bash
-docker push <REGISTRY_IP>:5000/strapi-app:v1
-docker push <REGISTRY_IP>:5000/next-app:v1
+# Build Strapi
+docker build -t <IP_REGISTRY>:5000/strapi-app:v1 ./strapi
+
+# Build Next.js
+docker build -t <IP_REGISTRY>:5000/next-app:v1 ./next
 ```
+
+> **💡 Mẹo đánh version:**
+> - Dùng tag ngày: `strapi-app:2026-05-14`
+> - Dùng commit hash: `strapi-app:abc1234`
+> - Dùng semver: `strapi-app:v1.2.0`
+
+### Bước 2.3: Push images lên Registry
+
+```bash
+docker push <IP_REGISTRY>:5000/strapi-app:v1
+docker push <IP_REGISTRY>:5000/next-app:v1
+```
+
+Sau khi push xong, kiểm tra trên UI tại `http://<IP_REGISTRY>:5001` để xác nhận images đã có.
 
 ---
 
-## 🚀 3. Pull & Deploy on VPS
+## 🚀 Phần 3: Pull và Deploy trên VPS
 
-On the production VPS, your `docker-compose.yml` should reference the images from your registry.
+Trên VPS production, tạo file `docker-compose.prod.yml` tham chiếu tới images từ Registry.
 
-### Optimized `docker-compose.prod.yml`
+### Bước 3.1: Tạo file docker-compose cho production
+
 ```yaml
 services:
   strapi:
-    image: <REGISTRY_IP>:5000/strapi-app:v1
+    image: <IP_REGISTRY>:5000/strapi-app:v1
     restart: always
-    # ... other config ...
+    ports:
+      - "1337:1337"
+    env_file:
+      - .env
+    # ... các cấu hình khác ...
 
   nextjs:
-    image: <REGISTRY_IP>:5000/next-app:v1
+    image: <IP_REGISTRY>:5000/next-app:v1
     restart: always
-    # ... other config ...
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    # ... các cấu hình khác ...
 ```
 
-### Deploy Lighly
-```bash
-# Login on VPS
-docker login <REGISTRY_IP>:5000
+### Bước 3.2: Đăng nhập và triển khai
 
-# Pull and Start (Zero Build Time)
+```bash
+# Đăng nhập trên VPS
+docker login <IP_REGISTRY>:5000
+
+# Pull images và khởi chạy (KHÔNG build — tiết kiệm tài nguyên)
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Bước 3.3: Cập nhật phiên bản mới
+
+Khi cần deploy version mới:
+
+```bash
+# 1. Trên máy local: build + push version mới
+docker build -t <IP_REGISTRY>:5000/strapi-app:v2 ./strapi
+docker push <IP_REGISTRY>:5000/strapi-app:v2
+
+# 2. Trên VPS: cập nhật tag trong docker-compose.prod.yml rồi:
+docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
 
 ---
 
-## 💡 Best Practices for Low-RAM VPS
+## 💡 Mẹo cho VPS RAM thấp (1GB - 2GB)
 
-- **No `build` on VPS:** Never run `docker compose up --build` on a 1GB/2GB RAM VPS. It will likely hang during `yarn install` or `next build`.
-- **Pre-baked Env Vars:** Bake production-safe environment variables into your docker images during build time or use a shared `.env` file that doesn't trigger a rebuild.
-- **Nginx Reverse Proxy:** Use the provided [nginx-registry.conf](nginx-registry.conf) to proxy `hub.yourdomain.com` to port 5000 with SSL. This makes `docker login` secure and standard.
-- **Garbage Collection:** Registry storage grows fast. Run this to clean up:
-  ```bash
-  docker exec docker-registry bin/registry garbage-collect /etc/docker/registry/config.yml
-  ```
+| Vấn đề | Giải pháp |
+|:--------|:----------|
+| VPS bị treo khi build | **KHÔNG BAO GIỜ** chạy `docker compose up --build` trên VPS RAM thấp. Luôn build ở local. |
+| Dung lượng đĩa đầy | Chạy garbage collection định kỳ (xem bên dưới). |
+| Docker login bị lỗi | Thêm `insecure-registries` hoặc cài SSL bằng Certbot. |
+| Cần HTTPS cho Registry | Dùng [nginx-registry.conf](nginx-registry.conf) + Certbot để cài SSL. |
+
+### Dọn rác (Garbage Collection)
+
+```bash
+# Xóa tag không dùng qua UI trước, sau đó:
+docker exec docker-registry bin/registry garbage-collect /etc/docker/registry/config.yml
+```
+
+### Cài SSL với Nginx + Certbot
+
+```bash
+# 1. Cài Nginx và copy config
+sudo cp nginx-registry.conf /etc/nginx/sites-available/hub.example.com
+sudo ln -s /etc/nginx/sites-available/hub.example.com /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+# 2. Cài Certbot và tạo SSL
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx -d hub.example.com
+```
 
 ---
 
-## 📈 Summary of Lifecycle
-1. **Code** (Local) → 2. **Build** (Local) → 3. **Push** (Registry) → 4. **Pull** (VPS) → 5. **Run** (VPS)
+## 📈 Tóm tắt vòng đời triển khai
+
+```text
+1. Code (Local)  →  2. Build (Local)  →  3. Push (Registry :5000)
+                                                    ↓
+5. Run (VPS)     ←  4. Pull (VPS)     ←────────────┘
+```
+
+**Nguyên tắc vàng:** VPS chỉ làm 2 việc — **Pull** và **Run**. Mọi thứ nặng đều xử lý ở local.

@@ -1,28 +1,32 @@
 services:
-  # Registry Core
+  # ============================================
+  # Docker Registry - Lưu trữ Docker Images
+  # Port mặc định: 5000
+  # ============================================
   registry:
     image: registry:2
     container_name: docker-registry
     restart: always
     ports:
       - "5000:5000"
-    environment:
-      REGISTRY_AUTH: htpasswd
-      REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
-      REGISTRY_AUTH_HTPASSWD_PATH: /auth/registry.password
-      # Enable image deletion for disk cleanup
-      REGISTRY_STORAGE_DELETE_ENABLED: "true"
     volumes:
+      # Config YAML được mount vào thay vì dùng environment variables
+      - ./config/registry-config.yml:/etc/docker/registry/config.yml:ro
+      # Thư mục lưu trữ images
       - ./data:/var/lib/registry
+      # File xác thực htpasswd
       - ./auth:/auth
 
-  # Web UI for Management
+  # ============================================
+  # Registry UI - Giao diện quản lý
+  # Port: 5001 (host) -> 80 (container)
+  # ============================================
   registry-ui:
     image: joxit/docker-registry-ui:latest
     container_name: registry-ui
     restart: always
     ports:
-      - "8080:80"
+      - "5001:80"
     environment:
       - REGISTRY_URL=http://registry:5000
       - DELETE_IMAGES=true

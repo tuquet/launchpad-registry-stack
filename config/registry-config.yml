@@ -1,0 +1,51 @@
+# =============================================================================
+# Docker Registry Configuration
+# File này được mount vào container tại: /etc/docker/registry/config.yml
+# Tham khảo: https://distribution.github.io/distribution/about/configuration/
+# =============================================================================
+
+version: 0.1
+
+# --- Logging ---
+log:
+  level: info
+  formatter: text
+  fields:
+    service: registry
+
+# --- Storage ---
+# Nơi lưu trữ Docker images bên trong container
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+  # Cho phép xóa image qua API (cần thiết cho UI và garbage collection)
+  delete:
+    enabled: true
+  # Giảm thiểu redirect để tương thích với các storage driver
+  redirect:
+    disable: false
+
+# --- HTTP Server ---
+http:
+  addr: :5000
+  headers:
+    X-Content-Type-Options: [nosniff]
+    # CORS headers - cho phép Registry UI giao tiếp với Registry
+    Access-Control-Allow-Origin: ["*"]
+    Access-Control-Allow-Methods: ["HEAD", "GET", "OPTIONS", "DELETE"]
+    Access-Control-Allow-Headers: ["Authorization", "Accept", "Cache-Control"]
+    Access-Control-Expose-Headers: ["Docker-Content-Digest"]
+
+# --- Authentication ---
+# Sử dụng htpasswd để xác thực cơ bản (Basic Auth)
+auth:
+  htpasswd:
+    realm: Registry Realm
+    path: /auth/registry.password
+
+# --- Health Check ---
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3
