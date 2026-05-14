@@ -9,7 +9,7 @@ Registry này được thiết kế để hoạt động cùng [Strapi Docker Bo
 
 ---
 
-> **📄 Hướng dẫn triển khai chi tiết:** Xem [DEPLOYMENT.md](DEPLOYMENT.md) để biết cách deploy **Strapi + Next.js** mà không tốn tài nguyên CPU/RAM của VPS.
+> **📄 Hướng dẫn triển khai chi tiết:** Xem [DEPLOYMENT.md](DEPLOYMENT.md) để cài đặt Registry, hoặc xem **[Hướng dẫn triển khai CMS lên VPS](./docs/deployment-vps.md)** (trong repo CMS) để biết quy trình đầy đủ.
 
 ## Cấu trúc dự án
 
