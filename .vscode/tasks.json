@@ -2,6 +2,26 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "🔑 registry: login",
+      "type": "shell",
+      "command": "docker login localhost:5000",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔐 registry: reset-password",
+      "type": "shell",
+      "command": "docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn ${input:user} ${input:pass} > auth/registry.password",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "🚀 registry: up",
       "type": "shell",
       "command": "docker compose up -d",
@@ -56,6 +76,19 @@
         "panel": "new"
       },
       "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "user",
+      "type": "promptString",
+      "description": "Registry Username",
+      "default": "admin"
+    },
+    {
+      "id": "pass",
+      "type": "promptString",
+      "description": "New Registry Password"
     }
   ]
 }
