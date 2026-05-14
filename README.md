@@ -9,7 +9,7 @@ Registry này được thiết kế để hoạt động cùng [Strapi Docker Bo
 
 ---
 
-> **📄 Hướng dẫn triển khai chi tiết:** Xem [DEPLOYMENT.md](DEPLOYMENT.md) để cài đặt Registry, hoặc xem **[Hướng dẫn triển khai CMS lên VPS](./docs/deployment-vps.md)** (trong repo CMS) để biết quy trình đầy đủ.
+> **📄 Hướng dẫn triển khai chi tiết:** Xem [DEPLOYMENT.md](DEPLOYMENT.md) để cài đặt Registry, hoặc xem **[Hướng dẫn setup VPS Debian](./docs/debian-vps-setup.md)** để thiết lập VPS từ đầu.
 
 ## Cấu trúc dự án
 
@@ -21,6 +21,8 @@ Registry này được thiết kế để hoạt động cùng [Strapi Docker Bo
 │   └── registry-config.yml     # Cấu hình Registry (mount vào container)
 ├── auth/
 │   └── registry.password       # File xác thực htpasswd
+├── docs/
+│   └── debian-vps-setup.md     # Hướng dẫn setup VPS Debian từ đầu
 └── data/                       # Thư mục lưu trữ images (tự tạo khi chạy)
 ```
 
