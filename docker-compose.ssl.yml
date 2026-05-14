@@ -1,0 +1,79 @@
+# =============================================================================
+# Docker Compose - Registry với SSL (HTTPS)
+#
+# Dùng file này thay vì docker-compose.yml khi bạn có domain và muốn HTTPS.
+# Lần đầu chạy: ./scripts/init-ssl.sh
+# Sau đó:       docker compose -f docker-compose.ssl.yml up -d
+# =============================================================================
+
+services:
+  # ============================================
+  # Docker Registry - Lưu trữ Docker Images
+  # Chỉ expose nội bộ, Nginx sẽ proxy
+  # ============================================
+  registry:
+    image: registry:2
+    container_name: docker-registry
+    restart: always
+    # Không expose port ra ngoài — Nginx sẽ proxy qua HTTPS
+    expose:
+      - "5000"
+    volumes:
+      - ./config/registry-config.yml:/etc/docker/registry/config.yml:ro
+      - ./data:/var/lib/registry
+      - ./auth:/auth
+
+  # ============================================
+  # Registry UI - Giao diện quản lý
+  # Chỉ expose nội bộ, Nginx sẽ proxy
+  # ============================================
+  registry-ui:
+    image: joxit/docker-registry-ui:latest
+    container_name: registry-ui
+    restart: always
+    # Không expose port ra ngoài — Nginx sẽ proxy qua HTTPS
+    expose:
+      - "80"
+    environment:
+      - NGINX_PROXY_PASS_URL=http://registry:5000
+      - DELETE_IMAGES=true
+      - SINGLE_REGISTRY=true
+      - REGISTRY_TITLE=Private Docker Registry
+    depends_on:
+      - registry
+
+  # ============================================
+  # Nginx - SSL Reverse Proxy
+  # Port 80 (HTTP redirect) + 443 (HTTPS)
+  # ============================================
+  nginx:
+    image: nginx:alpine
+    container_name: registry-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Config template — envsubst sẽ thay ${REGISTRY_DOMAIN}
+      - ./nginx/templates:/etc/nginx/templates:ro
+      # SSL certificates từ Certbot
+      - ./certbot/conf:/etc/nginx/ssl:ro
+      # Certbot challenge files
+      - ./certbot/www:/var/www/certbot:ro
+    environment:
+      - REGISTRY_DOMAIN=${REGISTRY_DOMAIN:-hub.example.com}
+    depends_on:
+      - registry
+      - registry-ui
+
+  # ============================================
+  # Certbot - Tự động gia hạn SSL
+  # ============================================
+  certbot:
+    image: certbot/certbot
+    container_name: registry-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    # Tự động gia hạn cert mỗi 12 giờ
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"

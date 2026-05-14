@@ -15,12 +15,19 @@ Registry này được thiết kế để hoạt động cùng [Strapi Docker Bo
 
 ```text
 .
-├── docker-compose.yml          # Cấu hình Docker services
-├── nginx-registry.conf         # Cấu hình Nginx reverse proxy
+├── docker-compose.yml          # Cấu hình HTTP (dev/local)
+├── docker-compose.ssl.yml      # Cấu hình HTTPS với Nginx + Certbot
+├── nginx-registry.conf         # Nginx config đơn giản (tham khảo)
 ├── config/
 │   └── registry-config.yml     # Cấu hình Registry (mount vào container)
+├── nginx/
+│   └── templates/
+│       └── registry.conf.template  # Nginx SSL template (dùng với docker-compose.ssl.yml)
+├── scripts/
+│   └── init-ssl.sh             # Script tự động cài SSL lần đầu
 ├── auth/
 │   └── registry.password       # File xác thực htpasswd
+├── certbot/                    # SSL certificates (tự tạo khi chạy init-ssl.sh)
 ├── docs/
 │   └── debian-vps-setup.md     # Hướng dẫn setup VPS Debian từ đầu
 └── data/                       # Thư mục lưu trữ images (tự tạo khi chạy)
@@ -118,6 +125,53 @@ Dự án sử dụng file `config/registry-config.yml` được mount vào conta
 > ```bash
 > docker compose restart registry
 > ```
+
+---
+
+## 🔒 Cài đặt HTTPS với SSL (Certbot)
+
+Khi triển khai trên VPS với domain, bạn nên bật HTTPS để:
+- ✅ Không cần cấu hình `insecure-registries` trên mỗi máy client
+- ✅ Bảo mật đường truyền khi push/pull images
+- ✅ Dùng `docker login` tiêu chuẩn không cảnh báo
+
+### Yêu cầu
+- Đã có domain trỏ về IP VPS (ví dụ: `hub.example.com`)
+- Port `80` và `443` đã mở trên firewall
+
+### Bước 1: Chạy script khởi tạo SSL
+
+```bash
+REGISTRY_DOMAIN=hub.example.com CERTBOT_EMAIL=you@email.com ./scripts/init-ssl.sh
+```
+
+Script sẽ tự động:
+1. Tạo self-signed cert tạm → khởi động Nginx
+2. Xin cert thật từ Let's Encrypt
+3. Restart Nginx với cert thật
+
+### Bước 2: Khởi chạy toàn bộ stack với SSL
+
+```bash
+REGISTRY_DOMAIN=hub.example.com docker compose -f docker-compose.ssl.yml up -d
+```
+
+### Bước 3: Đăng nhập (không cần insecure-registries!)
+
+```bash
+docker login hub.example.com
+```
+
+> **📝 So sánh 2 chế độ:**
+>
+> | | `docker-compose.yml` | `docker-compose.ssl.yml` |
+> |:--|:--|:--|
+> | Giao thức | HTTP | HTTPS (SSL) |
+> | Registry port | `5000` (exposed) | Không expose — qua Nginx |
+> | UI port | `5001` (exposed) | Không expose — qua Nginx |
+> | Truy cập | `http://IP:5000` / `http://IP:5001` | `https://domain` |
+> | Client cần | `insecure-registries` | Không cần gì thêm |
+> | Phù hợp | Dev/Local | Production/VPS |
 
 ---
 
