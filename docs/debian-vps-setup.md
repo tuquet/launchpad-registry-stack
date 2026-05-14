@@ -25,8 +25,10 @@ Tài liệu này hướng dẫn thiết lập VPS Debian từ đầu. Mỗi bư�
 | | 🔓 HTTP (không domain) | 🔒 HTTPS (có domain) |
 |:--|:--|:--|
 | **File compose** | `docker-compose.yml` | `docker-compose.ssl.yml` |
+| **Proxy** | Không có | Nginx UI (GUI) |
 | **Truy cập** | `http://<IP>:5000` | `https://hub.example.com` |
 | **UFW ports** | `22, 80, 5000, 5001` | `22, 80, 443` |
+| **Monitoring** | Không có | Nginx UI dashboard |
 | **Bảo mật** | ⚠️ Trung bình | ✅ Cao |
 
 ---
@@ -38,8 +40,8 @@ Tài liệu này hướng dẫn thiết lập VPS Debian từ đầu. Mỗi bư�
 3. [Cài Docker Engine](#-bước-3-cài-đặt-docker-engine)
 4. [Cấu hình Firewall](#-bước-4-cấu-hình-firewall) → 📄 [docs/firewall-ufw.md](./firewall-ufw.md)
 5. [Clone và Auth Registry](#-bước-5-clone-và-auth-registry) → 📄 [docs/docker-registry.md](./docker-registry.md)
-6. [Cài SSL (nếu có domain)](#-bước-6-cài-ssl) → 📄 [docs/ssl-certbot.md](./ssl-certbot.md)
-7. [Khởi chạy Registry](#-bước-7-khởi-chạy-registry)
+6. [Khởi chạy Registry](#-bước-6-khởi-chạy-registry)
+7. [Setup Nginx UI + SSL (nếu có domain)](#-bước-7-setup-nginx-ui--ssl-nếu-có-domain) → 📄 [docs/nginx-ui.md](./nginx-ui.md)
 8. [Deploy ứng dụng CMS](#-bước-8-deploy-ứng-dụng-cms)
 
 ---
@@ -137,31 +139,18 @@ docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn admin <MẬT_KHẨU_MẠNH>
 
 ---
 
-## 🔒 Bước 6: Cài SSL (nếu có domain)
+## 🚀 Bước 6: Khởi chạy Registry
 
-> 📄 **Tài liệu chi tiết:** [docs/ssl-certbot.md](./ssl-certbot.md)
-
-Bỏ qua bước này nếu dùng HTTP mode.
-
-```bash
-chmod +x scripts/init-ssl.sh
-REGISTRY_DOMAIN=hub.example.com CERTBOT_EMAIL=you@email.com ./scripts/init-ssl.sh
-```
-
----
-
-## 🚀 Bước 7: Khởi chạy Registry
-
-**🔓 HTTP:**
+**🔓 HTTP (không domain):**
 
 ```bash
 docker compose up -d
 ```
 
-**🔒 HTTPS:**
+**🔒 HTTPS (có domain — dùng Nginx UI):**
 
 ```bash
-REGISTRY_DOMAIN=hub.example.com docker compose -f docker-compose.ssl.yml up -d
+docker compose -f docker-compose.ssl.yml up -d
 ```
 
 **Kiểm tra:**
@@ -169,8 +158,41 @@ REGISTRY_DOMAIN=hub.example.com docker compose -f docker-compose.ssl.yml up -d
 ```bash
 docker ps
 curl -u admin:<PASS> http://localhost:5000/v2/_catalog   # HTTP
-curl -u admin:<PASS> https://hub.example.com/v2/_catalog # HTTPS
+curl -u admin:<PASS> https://hub.example.com/v2/_catalog # HTTPS (sau khi setup SSL)
 ```
+
+---
+
+## 🔒 Bước 7: Setup Nginx UI + SSL (nếu có domain)
+
+> 📄 **Tài liệu chi tiết:** [docs/nginx-ui.md](./nginx-ui.md)
+
+Bỏ qua bước này nếu dùng HTTP mode.
+
+### 7.1 Lấy Install Secret
+
+```bash
+docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret
+```
+
+### 7.2 Hoàn tất Web Setup
+
+1. Truy cập `http://<IP_VPS>:80`
+2. Nhập **Install Secret** từ bước 7.1
+3. Tạo tài khoản admin cho Nginx UI
+4. **Bật 2FA** ngay sau khi đăng nhập
+
+### 7.3 Cấu hình Reverse Proxy
+
+Trong Nginx UI, tạo site config cho Registry — xem mẫu tại [docs/nginx-ui.md](./nginx-ui.md#bước-4-cấu-hình-reverse-proxy-cho-registry).
+
+### 7.4 Bật SSL (One-click)
+
+1. Trong site config → **Enable SSL** → **Let's Encrypt**
+2. Nhập email → **Issue**
+3. Nginx UI tự động cấu hình HTTPS + auto-renew
+
+> **✅ Xong!** Không cần script, không cần cron job.
 
 ---
 
@@ -232,10 +254,16 @@ docker compose -f docker-compose.prod.yml up -d
 
 ```bash
 cd ~/launchpad-registry-stack
+
+# 1. Dừng stack HTTP
 docker compose down
-chmod +x scripts/init-ssl.sh
-REGISTRY_DOMAIN=hub.example.com CERTBOT_EMAIL=you@email.com ./scripts/init-ssl.sh
-REGISTRY_DOMAIN=hub.example.com docker compose -f docker-compose.ssl.yml up -d
+
+# 2. Chạy lại với Nginx UI
+docker compose -f docker-compose.ssl.yml up -d
+
+# 3. Hoàn tất Nginx UI setup (xem Bước 7)
+docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret
+# → Truy cập http://<IP>:80 → Setup → Tạo site config → Bật SSL
 ```
 
 ---
@@ -246,8 +274,10 @@ REGISTRY_DOMAIN=hub.example.com docker compose -f docker-compose.ssl.yml up -d
 |:---------|:------|
 | Xem container | `docker ps` |
 | Xem logs | `docker compose logs -f` |
+| Nginx UI logs | `docker logs -f registry-nginx-ui` |
 | Restart | `docker compose restart` |
 | Dọn rác Registry | `docker exec docker-registry bin/registry garbage-collect /etc/docker/registry/config.yml` |
 | Kiểm tra UFW | `sudo ufw status verbose` |
 | Dung lượng đĩa | `df -h` |
 | RAM | `free -m` |
+| Nginx UI secret | `docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret` |
