@@ -11,7 +11,7 @@ Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy (GUI
 │                        VPS Production                            │
 │                                                                  │
 │  ┌─────────────┐   ┌──────────────────────────────────────────┐ │
-│  │ 🛡️ UFW      │   │ 🔀 Nginx UI                             │ │
+│  │ 🛡️ Firewalld│   │ 🔀 Nginx UI                             │ │
 │  │ Firewall    │──▶│ Reverse Proxy + SSL + Monitoring         │ │
 │  │ Port Guard  │   │ GUI Config Editor + Web Terminal          │ │
 │  └─────────────┘   │ Let's Encrypt Auto-Renew                 │ │
@@ -35,7 +35,7 @@ Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy (GUI
 | # | Module | Component | Tài liệu chi tiết |
 |:-:|:-------|:----------|:-------------------|
 | 1 | 🔀 **Nginx UI** | [`nginx-ui/`](./nginx-ui/) | [docs/nginx-ui.md](./docs/nginx-ui.md) |
-| 2 | 🛡️ **Firewall (UFW)** | [`firewall/`](./firewall/) | [docs/firewall-ufw.md](./docs/firewall-ufw.md) |
+| 2 | 🛡️ **Firewall (Cockpit)**| [`firewall/`](./firewall/) | [docs/firewall-cockpit.md](./docs/firewall-cockpit.md) |
 | 3 | 🐳 **Docker Registry** | [`registry/`](./registry/) | [docs/docker-registry.md](./docs/docker-registry.md) |
 
 > **Nginx UI** tích hợp sẵn: Nginx Reverse Proxy + Let's Encrypt SSL + Server Monitoring + Config Backup + Log Viewer + Web Terminal + AI Assistant.
@@ -58,7 +58,7 @@ Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy (GUI
 │   ├── data/                              ← Nginx UI database + settings
 │   └── www/                               ← Static files
 │
-├── firewall/                              ← [Module 2] UFW Configuration
+├── firewall/                              ← [Module 2] Firewalld Configuration
 │   └── README.md
 │
 ├── registry/                              ← [Module 3] Docker Registry
@@ -70,11 +70,11 @@ Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy (GUI
 │   └── registry.password
 │
 ├── scripts/                               ← Automation scripts
-│   └── setup-ufw.sh                      ← Cấu hình UFW tự động
+│   └── setup-cockpit.sh                  ← Cài đặt Cockpit & Firewalld
 │
 ├── docs/                                  ← Tài liệu chuyên sâu
 │   ├── nginx-ui.md                       ← Nginx UI setup & management
-│   ├── firewall-ufw.md                   ← Module 2 docs
+│   ├── firewall-cockpit.md               ← Module 2 docs
 │   ├── docker-registry.md               ← Module 3 docs
 │   └── debian-vps-setup.md             ← Hướng dẫn setup VPS từ đầu
 │
@@ -107,8 +107,8 @@ docker compose up -d
 mkdir -p auth
 docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn admin <MẬT_KHẨU> > auth/registry.password
 
-# 2. Cấu hình UFW
-chmod +x scripts/setup-ufw.sh && ./scripts/setup-ufw.sh https
+# 2. Cấu hình Firewall & Server Management
+chmod +x scripts/setup-cockpit.sh && ./scripts/setup-cockpit.sh
 
 # 3. Khởi chạy stack (Nginx UI + Registry)
 docker compose -f docker-compose.ssl.yml up -d
@@ -164,7 +164,7 @@ docker login hub.example.com
 |:----------|:------|
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Quy trình triển khai end-to-end |
 | [docs/nginx-ui.md](./docs/nginx-ui.md) | Setup & quản trị Nginx UI |
-| [docs/firewall-ufw.md](./docs/firewall-ufw.md) | Cấu hình UFW Firewall |
+| [docs/firewall-cockpit.md](./docs/firewall-cockpit.md) | Quản trị Firewall & Server qua Cockpit Web UI |
 | [docs/docker-registry.md](./docs/docker-registry.md) | Quản trị Docker Registry |
 | [docs/debian-vps-setup.md](./docs/debian-vps-setup.md) | Setup VPS Debian từ đầu |
 

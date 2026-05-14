@@ -1,17 +1,16 @@
-# Firewall Module
+# Firewall & Server Module
 
-Quản lý UFW Firewall rules cho LaunchPad DevOps Ecosystem.
+Quản lý Firewalld và Server metrics cho LaunchPad DevOps Ecosystem bằng **Cockpit**.
 
 ## Quick Setup
 
 ```bash
-# HTTP mode (không domain)
-./scripts/setup-ufw.sh http
-
-# HTTPS mode (có domain)
-./scripts/setup-ufw.sh https
+# Cài đặt Cockpit và Firewalld
+./scripts/setup-cockpit.sh
 ```
+
+Truy cập quản trị tại: `https://<IP_VPS>:9090`
 
 ## Tài liệu chi tiết
 
-📄 Xem [docs/firewall-ufw.md](../docs/firewall-ufw.md)
+📄 Xem [docs/firewall-cockpit.md](../docs/firewall-cockpit.md)

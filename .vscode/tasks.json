@@ -110,9 +110,9 @@
       "problemMatcher": []
     },
     {
-      "label": "🛡️ firewall: setup",
+      "label": "🛡️ firewall: setup-cockpit",
       "type": "shell",
-      "command": "chmod +x scripts/setup-ufw.sh && ./scripts/setup-ufw.sh ${input:fwMode}",
+      "command": "chmod +x scripts/setup-cockpit.sh && ./scripts/setup-cockpit.sh",
       "presentation": {
         "reveal": "always",
         "panel": "new"
@@ -122,7 +122,7 @@
     {
       "label": "🛡️ firewall: status",
       "type": "shell",
-      "command": "sudo ufw status verbose",
+      "command": "sudo firewall-cmd --list-all",
       "presentation": {
         "reveal": "always",
         "panel": "new"
@@ -141,13 +141,6 @@
       "id": "pass",
       "type": "promptString",
       "description": "New Registry Password"
-    },
-    {
-      "id": "fwMode",
-      "type": "pickString",
-      "description": "Firewall mode",
-      "options": ["http", "https"],
-      "default": "https"
     }
   ]
 }

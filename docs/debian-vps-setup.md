@@ -27,7 +27,7 @@ Tài liệu này hướng dẫn thiết lập VPS Debian từ đầu. Mỗi bư�
 | **File compose** | `docker-compose.yml` | `docker-compose.ssl.yml` |
 | **Proxy** | Không có | Nginx UI (GUI) |
 | **Truy cập** | `http://<IP>:5000` | `https://hub.example.com` |
-| **UFW ports** | `22, 80, 5000, 5001` | `22, 80, 443` |
+| **Firewall ports** | `22, 80, 5000, 5001, 9090` | `22, 80, 443, 9090` |
 | **Monitoring** | Không có | Nginx UI dashboard |
 | **Bảo mật** | ⚠️ Trung bình | ✅ Cao |
 
@@ -38,7 +38,7 @@ Tài liệu này hướng dẫn thiết lập VPS Debian từ đầu. Mỗi bư�
 1. [Cập nhật hệ thống](#-bước-1-cập-nhật-hệ-thống-debian)
 2. [Tạo user sudo](#-bước-2-tạo-user-sudo)
 3. [Cài Docker Engine](#-bước-3-cài-đặt-docker-engine)
-4. [Cấu hình Firewall](#-bước-4-cấu-hình-firewall) → 📄 [docs/firewall-ufw.md](./firewall-ufw.md)
+4. [Cấu hình Firewall & Cockpit](#-bước-4-cấu-hình-firewall--cockpit) → 📄 [docs/firewall-cockpit.md](./firewall-cockpit.md)
 5. [Clone và Auth Registry](#-bước-5-clone-và-auth-registry) → 📄 [docs/docker-registry.md](./docker-registry.md)
 6. [Khởi chạy Registry](#-bước-6-khởi-chạy-registry)
 7. [Setup Nginx UI + SSL (nếu có domain)](#-bước-7-setup-nginx-ui--ssl-nếu-có-domain) → 📄 [docs/nginx-ui.md](./nginx-ui.md)
@@ -104,22 +104,21 @@ docker run hello-world
 
 ---
 
-## 🛡️ Bước 4: Cấu hình Firewall
+## 🛡️ Bước 4: Cấu hình Firewall & Cockpit
 
-> 📄 **Tài liệu chi tiết:** [docs/firewall-ufw.md](./firewall-ufw.md)
+> 📄 **Tài liệu chi tiết:** [docs/firewall-cockpit.md](./firewall-cockpit.md)
 
-Sử dụng script tự động:
+Sử dụng script tự động để gỡ UFW (nếu có) và cài đặt Firewalld + Cockpit:
 
 ```bash
 cd ~/launchpad-registry-stack
-chmod +x scripts/setup-ufw.sh
+chmod +x scripts/setup-cockpit.sh
 
-# Chọn 1:
-./scripts/setup-ufw.sh http    # Không có domain
-./scripts/setup-ufw.sh https   # Có domain
+./scripts/setup-cockpit.sh
 ```
 
-Hoặc cấu hình thủ công — xem [firewall-ufw.md](./firewall-ufw.md#cấu-hình-cơ-bản-chung-cho-cả-2-chế-độ).
+**Quản lý VPS qua Cockpit:**
+Truy cập `https://<IP_VPS>:9090` và đăng nhập bằng tài khoản `deploy` hoặc `root` để quản lý hệ thống và Firewall qua Web UI.
 
 ---
 
@@ -277,7 +276,7 @@ docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret
 | Nginx UI logs | `docker logs -f registry-nginx-ui` |
 | Restart | `docker compose restart` |
 | Dọn rác Registry | `docker exec docker-registry bin/registry garbage-collect /etc/docker/registry/config.yml` |
-| Kiểm tra UFW | `sudo ufw status verbose` |
+| Kiểm tra Firewall | Truy cập `https://<IP>:9090` (Cockpit) hoặc `sudo firewall-cmd --list-all` |
 | Dung lượng đĩa | `df -h` |
 | RAM | `free -m` |
 | Nginx UI secret | `docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret` |
