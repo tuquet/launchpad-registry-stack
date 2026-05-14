@@ -55,14 +55,27 @@ chmod +x scripts/setup-ufw.sh
 docker compose up -d
 ```
 
-**🔒 Có domain (HTTPS):**
+**🔒 Có domain (HTTPS — Nginx UI):**
 
-> 📄 Chi tiết: [docs/ssl-certbot.md](./docs/ssl-certbot.md)
+> 📄 Chi tiết: [docs/nginx-ui.md](./docs/nginx-ui.md)
 
 ```bash
-chmod +x scripts/init-ssl.sh
-REGISTRY_DOMAIN=hub.example.com CERTBOT_EMAIL=you@email.com ./scripts/init-ssl.sh
-REGISTRY_DOMAIN=hub.example.com docker compose -f docker-compose.ssl.yml up -d
+# 1. Khởi chạy stack
+docker compose -f docker-compose.ssl.yml up -d
+
+# 2. Lấy Install Secret
+docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret
+
+# 3. Hoàn tất Web Setup
+#    → Truy cập http://<IP_VPS>:80
+#    → Nhập Install Secret
+#    → Tạo admin account + Bật 2FA
+
+# 4. Trong Nginx UI: tạo site config cho Registry
+#    → Xem mẫu config tại docs/nginx-ui.md
+
+# 5. Bật SSL One-click
+#    → Trong site config → Enable SSL → Let's Encrypt → Issue
 ```
 
 **Kiểm tra:**
@@ -157,8 +170,10 @@ docker compose -f docker-compose.prod.yml up -d
 |:--------|:----------|
 | VPS treo khi build | **KHÔNG** chạy `docker compose up --build` trên VPS |
 | Dung lượng đĩa đầy | Chạy [Garbage Collection](./docs/docker-registry.md#garbage-collection-dọn-rác) |
-| Docker login lỗi | Cấu hình `insecure-registries` hoặc [cài SSL](./docs/ssl-certbot.md) |
-| Cần HTTPS | Dùng [Nginx + Certbot](./docs/nginx-proxy.md) |
+| Docker login lỗi | Cấu hình `insecure-registries` hoặc bật SSL trong Nginx UI |
+| Cần HTTPS | Dùng [Nginx UI](./docs/nginx-ui.md) — One-click Let's Encrypt |
+| Nginx config sai | Dùng Nginx UI config backup → rollback |
+| Server monitoring | Nginx UI dashboard → CPU, RAM, Disk real-time |
 
 ---
 

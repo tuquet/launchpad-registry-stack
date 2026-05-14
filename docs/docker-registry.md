@@ -118,8 +118,8 @@ docker compose up -d
 ### HTTPS mode (production)
 
 ```bash
-# Xem docs/ssl-certbot.md để khởi tạo SSL trước
-REGISTRY_DOMAIN=hub.example.com docker compose -f docker-compose.ssl.yml up -d
+# Xem docs/nginx-ui.md để setup SSL qua Nginx UI
+docker compose -f docker-compose.ssl.yml up -d
 ```
 
 - Registry: `https://hub.example.com`
@@ -220,6 +220,5 @@ docker exec docker-registry bin/registry garbage-collect --dry-run /etc/docker/r
 
 ## Tài liệu liên quan
 
-- 📄 [Nginx Proxy](./nginx-proxy.md) — Proxy cho Registry API và UI
-- 📄 [SSL/Certbot](./ssl-certbot.md) — HTTPS cho Registry
-- 📄 [Firewall UFW](./firewall-ufw.md) — Mở port 5000/5001 hoặc 443
+- 📄 [Nginx UI](./nginx-ui.md) — Reverse Proxy + SSL quản trị qua GUI
+- 📄 [Firewall UFW](./firewall-ufw.md) — Mở port 80/443

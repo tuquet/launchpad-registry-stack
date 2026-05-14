@@ -35,7 +35,7 @@ sudo ufw default allow outgoing
 # ⚠️ QUAN TRỌNG: SSH trước khi bật UFW!
 sudo ufw allow 22/tcp comment 'SSH'
 
-# HTTP (cần cho cả 2 chế độ — Certbot + redirect)
+# HTTP (cần cho cả 2 chế độ — Nginx UI + Let's Encrypt challenge)
 sudo ufw allow 80/tcp comment 'HTTP'
 ```
 
@@ -56,10 +56,10 @@ sudo ufw allow 5001/tcp comment 'Registry Web UI'
 ### 🔒 Có Domain (HTTPS)
 
 ```bash
-# HTTPS (Nginx SSL)
+# HTTPS (Nginx UI SSL)
 sudo ufw allow 443/tcp comment 'HTTPS'
 
-# KHÔNG cần mở 5000, 5001 — Nginx proxy qua port 443
+# KHÔNG cần mở 5000, 5001 — Nginx UI proxy qua port 443
 ```
 
 ---
@@ -219,13 +219,12 @@ sudo ss -tlnp | grep -E '5000|5001|80|443'
 |:-------|:----------|
 | Bị lock SSH sau `ufw enable` | Liên hệ hosting provider, truy cập VNC console |
 | Port mở nhưng không kết nối được | Kiểm tra Docker có bypass UFW không |
-| Certbot thất bại | Đảm bảo port 80 đã mở |
+| Certbot / Let's Encrypt thất bại | Đảm bảo port 80 đã mở (Nginx UI cần cho ACME challenge) |
 | `docker push` timeout | Kiểm tra port 5000 (HTTP) hoặc 443 (HTTPS) |
 
 ---
 
 ## Tài liệu liên quan
 
-- 📄 [Nginx Proxy](./nginx-proxy.md) — Service cần port 80/443
-- 📄 [SSL/Certbot](./ssl-certbot.md) — Cần port 80 cho ACME challenge
+- 📄 [Nginx UI](./nginx-ui.md) — Reverse Proxy + SSL (cần port 80/443)
 - 📄 [Docker Registry](./docker-registry.md) — Service cần port 5000 (HTTP mode)

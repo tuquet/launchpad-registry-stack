@@ -34,7 +34,7 @@
       "problemMatcher": []
     },
     {
-      "label": "🔒 registry: up (HTTPS)",
+      "label": "🔒 registry: up (HTTPS + Nginx UI)",
       "type": "shell",
       "command": "docker compose -f docker-compose.ssl.yml up -d",
       "group": "build",
@@ -90,9 +90,19 @@
       "problemMatcher": []
     },
     {
-      "label": "🔒 ssl: init",
+      "label": "🔒 nginx-ui: install-secret",
       "type": "shell",
-      "command": "chmod +x scripts/init-ssl.sh && REGISTRY_DOMAIN=${input:domain} CERTBOT_EMAIL=${input:email} ./scripts/init-ssl.sh",
+      "command": "docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 nginx-ui: logs",
+      "type": "shell",
+      "command": "docker logs -f registry-nginx-ui",
       "presentation": {
         "reveal": "always",
         "panel": "new"
@@ -131,18 +141,6 @@
       "id": "pass",
       "type": "promptString",
       "description": "New Registry Password"
-    },
-    {
-      "id": "domain",
-      "type": "promptString",
-      "description": "Registry Domain (e.g. hub.example.com)",
-      "default": "hub.example.com"
-    },
-    {
-      "id": "email",
-      "type": "promptString",
-      "description": "Certbot Email",
-      "default": "you@email.com"
     },
     {
       "id": "fwMode",

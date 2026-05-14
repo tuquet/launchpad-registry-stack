@@ -1,21 +1,25 @@
 # =============================================================================
-# Docker Compose - Registry với SSL (HTTPS)
+# Docker Compose - Registry với SSL (HTTPS) — Powered by Nginx UI
 #
-# Dùng file này thay vì docker-compose.yml khi bạn có domain và muốn HTTPS.
-# Lần đầu chạy: ./scripts/init-ssl.sh
-# Sau đó:       docker compose -f docker-compose.ssl.yml up -d
+# Nginx UI thay thế Nginx + Certbot:
+#   - GUI quản trị Nginx config
+#   - One-click Let's Encrypt SSL + Auto-renew
+#   - Server monitoring, log viewer, web terminal
+#
+# Khởi chạy:  docker compose -f docker-compose.ssl.yml up -d
+# Nginx UI:   http://<IP>:80 → hoàn tất setup lần đầu
 # =============================================================================
 
 services:
   # ============================================
   # Docker Registry - Lưu trữ Docker Images
-  # Chỉ expose nội bộ, Nginx sẽ proxy
+  # Chỉ expose nội bộ, Nginx UI sẽ proxy
   # ============================================
   registry:
     image: registry:2
     container_name: docker-registry
     restart: always
-    # Không expose port ra ngoài — Nginx sẽ proxy qua HTTPS
+    # Không expose port ra ngoài — Nginx UI sẽ proxy qua HTTPS
     expose:
       - "5000"
     volumes:
@@ -24,14 +28,14 @@ services:
       - ./auth:/auth
 
   # ============================================
-  # Registry UI - Giao diện quản lý
-  # Chỉ expose nội bộ, Nginx sẽ proxy
+  # Registry UI - Giao diện quản lý Registry
+  # Chỉ expose nội bộ, Nginx UI sẽ proxy
   # ============================================
   registry-ui:
     image: joxit/docker-registry-ui:latest
     container_name: registry-ui
     restart: always
-    # Không expose port ra ngoài — Nginx sẽ proxy qua HTTPS
+    # Không expose port ra ngoài — Nginx UI sẽ proxy qua HTTPS
     expose:
       - "80"
     environment:
@@ -43,37 +47,31 @@ services:
       - registry
 
   # ============================================
-  # Nginx - SSL Reverse Proxy
-  # Port 80 (HTTP redirect) + 443 (HTTPS)
+  # Nginx UI — Quản trị Nginx + SSL + Monitoring
+  #
+  # Thay thế: nginx:alpine + certbot/certbot
+  # Bao gồm: Nginx reverse proxy, Let's Encrypt,
+  #           GUI config editor, log viewer,
+  #           server monitoring, web terminal
   # ============================================
-  nginx:
-    image: nginx:alpine
-    container_name: registry-nginx
+  nginx-ui:
+    image: uozi/nginx-ui:latest
+    container_name: registry-nginx-ui
     restart: always
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      # Config template — envsubst sẽ thay ${REGISTRY_DOMAIN}
-      - ./nginx/templates:/etc/nginx/templates:ro
-      # SSL certificates từ Certbot
-      - ./certbot/conf:/etc/nginx/ssl:ro
-      # Certbot challenge files
-      - ./certbot/www:/var/www/certbot:ro
+      # Nginx config (persistent — quan trọng: mount thư mục trống lần đầu)
+      - ./nginx-ui/nginx:/etc/nginx
+      # Nginx UI data (database, settings, certs)
+      - ./nginx-ui/data:/etc/nginx-ui
+      # Static files nếu cần serve
+      - ./nginx-ui/www:/var/www
+      # Docker socket — cho server monitoring
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - REGISTRY_DOMAIN=${REGISTRY_DOMAIN:-hub.example.com}
+      - TZ=Asia/Ho_Chi_Minh
     depends_on:
       - registry
       - registry-ui
-
-  # ============================================
-  # Certbot - Tự động gia hạn SSL
-  # ============================================
-  certbot:
-    image: certbot/certbot
-    container_name: registry-certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    # Tự động gia hạn cert mỗi 12 giờ
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"

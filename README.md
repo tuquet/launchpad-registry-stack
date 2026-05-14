@@ -1,6 +1,6 @@
 # 🚀 LaunchPad DevOps Ecosystem
 
-Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy, SSL Certificate, Firewall và Private Docker Registry trên một VPS duy nhất.
+Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy (GUI), SSL Certificate, Firewall và Private Docker Registry trên một VPS duy nhất.
 
 ---
 
@@ -10,34 +10,35 @@ Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy, SSL
 ┌──────────────────────────────────────────────────────────────────┐
 │                        VPS Production                            │
 │                                                                  │
-│  ┌─────────────┐   ┌──────────────┐   ┌───────────────────────┐ │
-│  │ 🛡️ UFW      │   │ 🔀 Nginx     │   │ 🔒 Certbot           │ │
-│  │ Firewall    │──▶│ Reverse Proxy│◀──│ SSL Auto-Renewal      │ │
-│  │ Port Guard  │   │ Port 80/443  │   │ Let's Encrypt         │ │
-│  └─────────────┘   └──────┬───────┘   └───────────────────────┘ │
-│                           │                                      │
-│              ┌────────────┼────────────┐                        │
-│              │                         │                        │
-│    ┌─────────▼─────────┐    ┌──────────▼──────────┐             │
-│    │ 🐳 Registry API   │    │ 🖥️ Registry UI      │             │
-│    │ Push/Pull Images  │    │ Web Management       │             │
-│    │ Port 5000 (int)   │    │ Port 80 (int)        │             │
-│    └───────────────────┘    └─────────────────────┘             │
+│  ┌─────────────┐   ┌──────────────────────────────────────────┐ │
+│  │ 🛡️ UFW      │   │ 🔀 Nginx UI                             │ │
+│  │ Firewall    │──▶│ Reverse Proxy + SSL + Monitoring         │ │
+│  │ Port Guard  │   │ GUI Config Editor + Web Terminal          │ │
+│  └─────────────┘   │ Let's Encrypt Auto-Renew                 │ │
+│                     │ Port 80/443                               │ │
+│                     └──────────────┬───────────────────────────┘ │
+│                                    │                              │
+│                       ┌────────────┼────────────┐                │
+│                       │                         │                │
+│             ┌─────────▼─────────┐    ┌──────────▼──────────┐    │
+│             │ 🐳 Registry API   │    │ 🖥️ Registry UI      │    │
+│             │ Push/Pull Images  │    │ Web Management       │    │
+│             │ Port 5000 (int)   │    │ Port 80 (int)        │    │
+│             └───────────────────┘    └─────────────────────┘    │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📦 4 Trụ cột (Pillars)
+## 📦 3 Modules
 
-| # | Pillar | Module | Tài liệu chi tiết |
-|:-:|:-------|:-------|:-------------------|
-| 1 | 🔀 **Nginx Proxy** | [`nginx/`](./nginx/) | [docs/nginx-proxy.md](./docs/nginx-proxy.md) |
-| 2 | 🔒 **SSL / Certbot** | [`certbot/`](./certbot/) | [docs/ssl-certbot.md](./docs/ssl-certbot.md) |
-| 3 | 🛡️ **Firewall (UFW)** | [`firewall/`](./firewall/) | [docs/firewall-ufw.md](./docs/firewall-ufw.md) |
-| 4 | 🐳 **Docker Registry** | [`registry/`](./registry/) | [docs/docker-registry.md](./docs/docker-registry.md) |
+| # | Module | Component | Tài liệu chi tiết |
+|:-:|:-------|:----------|:-------------------|
+| 1 | 🔀 **Nginx UI** | [`nginx-ui/`](./nginx-ui/) | [docs/nginx-ui.md](./docs/nginx-ui.md) |
+| 2 | 🛡️ **Firewall (UFW)** | [`firewall/`](./firewall/) | [docs/firewall-ufw.md](./docs/firewall-ufw.md) |
+| 3 | 🐳 **Docker Registry** | [`registry/`](./registry/) | [docs/docker-registry.md](./docs/docker-registry.md) |
 
-> Mỗi pillar có **tài liệu riêng biệt**, tuân thủ nguyên tắc Single Responsibility — đọc độc lập mà không cần context toàn bộ project.
+> **Nginx UI** tích hợp sẵn: Nginx Reverse Proxy + Let's Encrypt SSL + Server Monitoring + Config Backup + Log Viewer + Web Terminal + AI Assistant.
 
 ---
 
@@ -50,22 +51,17 @@ Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy, SSL
 ├── .env.example                           ← Template biến môi trường
 │
 ├── docker-compose.yml                     ← HTTP mode (dev/local)
-├── docker-compose.ssl.yml                 ← HTTPS mode (production)
+├── docker-compose.ssl.yml                 ← HTTPS mode (production, Nginx UI)
 │
-├── nginx/                                 ← [Pillar 1] Reverse Proxy
-│   ├── README.md
-│   ├── nginx-registry.conf               ← Standalone HTTP config
-│   └── templates/
-│       └── registry.conf.template         ← Docker SSL template
+├── nginx-ui/                              ← [Module 1] Nginx UI (runtime, gitignored)
+│   ├── nginx/                             ← Nginx config (auto-managed)
+│   ├── data/                              ← Nginx UI database + settings
+│   └── www/                               ← Static files
 │
-├── certbot/                               ← [Pillar 2] SSL Certificates (runtime)
-│   ├── conf/                              ← Certificates (gitignored)
-│   └── www/                               ← ACME challenges (gitignored)
-│
-├── firewall/                              ← [Pillar 3] UFW Configuration
+├── firewall/                              ← [Module 2] UFW Configuration
 │   └── README.md
 │
-├── registry/                              ← [Pillar 4] Docker Registry
+├── registry/                              ← [Module 3] Docker Registry
 │   ├── README.md
 │   └── config/
 │       └── registry-config.yml            ← Registry config (mount vào container)
@@ -74,15 +70,13 @@ Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy, SSL
 │   └── registry.password
 │
 ├── scripts/                               ← Automation scripts
-│   ├── init-ssl.sh                        ← Khởi tạo SSL certificate
 │   └── setup-ufw.sh                      ← Cấu hình UFW tự động
 │
 ├── docs/                                  ← Tài liệu chuyên sâu
-│   ├── nginx-proxy.md                     ← Pillar 1 docs
-│   ├── ssl-certbot.md                     ← Pillar 2 docs
-│   ├── firewall-ufw.md                    ← Pillar 3 docs
-│   ├── docker-registry.md                ← Pillar 4 docs
-│   └── debian-vps-setup.md              ← Hướng dẫn setup VPS từ đầu
+│   ├── nginx-ui.md                       ← Nginx UI setup & management
+│   ├── firewall-ufw.md                   ← Module 2 docs
+│   ├── docker-registry.md               ← Module 3 docs
+│   └── debian-vps-setup.md             ← Hướng dẫn setup VPS từ đầu
 │
 └── data/                                  ← Registry data (gitignored)
 ```
@@ -106,7 +100,7 @@ docker compose up -d
 # Registry UI:   http://localhost:5001
 ```
 
-### Chế độ HTTPS (Production / Có domain)
+### Chế độ HTTPS (Production / Có domain — Nginx UI)
 
 ```bash
 # 1. Tạo auth
@@ -116,14 +110,17 @@ docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn admin <MẬT_KHẨU> > auth
 # 2. Cấu hình UFW
 chmod +x scripts/setup-ufw.sh && ./scripts/setup-ufw.sh https
 
-# 3. Khởi tạo SSL
-chmod +x scripts/init-ssl.sh
-REGISTRY_DOMAIN=hub.example.com CERTBOT_EMAIL=you@email.com ./scripts/init-ssl.sh
+# 3. Khởi chạy stack (Nginx UI + Registry)
+docker compose -f docker-compose.ssl.yml up -d
 
-# 4. Khởi chạy
-REGISTRY_DOMAIN=hub.example.com docker compose -f docker-compose.ssl.yml up -d
+# 4. Lấy Install Secret và hoàn tất web setup
+docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret
+# → Truy cập http://<IP>:80 → Nhập secret → Tạo admin account
 
-# 5. Đăng nhập
+# 5. Trong Nginx UI: tạo site config + bật SSL (one-click Let's Encrypt)
+# → Chi tiết: docs/nginx-ui.md
+
+# 6. Đăng nhập Registry
 docker login hub.example.com
 ```
 
@@ -134,11 +131,30 @@ docker login hub.example.com
 | | HTTP (`docker-compose.yml`) | HTTPS (`docker-compose.ssl.yml`) |
 |:--|:--|:--|
 | Giao thức | HTTP | HTTPS (SSL) |
-| Registry port | `5000` (exposed) | Internal — qua Nginx |
-| UI port | `5001` (exposed) | Internal — qua Nginx |
+| Proxy | Không có | Nginx UI (GUI) |
+| Registry port | `5000` (exposed) | Internal — qua Nginx UI |
+| UI port | `5001` (exposed) | Internal — qua Nginx UI |
 | Truy cập | `http://IP:5000` / `http://IP:5001` | `https://domain` |
+| Monitoring | Không có | CPU, RAM, Disk real-time |
 | Client cần | `insecure-registries` | Không cần gì thêm |
 | Phù hợp | Dev/Local | Production/VPS |
+
+---
+
+## ✨ Tính năng bổ sung từ Nginx UI
+
+| Tính năng | Mô tả |
+|:----------|:------|
+| 📊 Server Monitoring | CPU, RAM, Load Average, Disk — real-time dashboard |
+| 💾 Config Backup | Tự động backup + diff + one-click rollback |
+| 📜 Log Viewer | Xem Nginx access/error log online |
+| 💻 Web Terminal | Terminal trực tiếp trong browser |
+| 🤖 AI Assistant | ChatGPT/Deepseek hỗ trợ tối ưu config |
+| 🔍 Code Completion | LLM-powered completion trong config editor |
+| 🔐 2FA | Two-factor authentication cho panel |
+| 🔄 Cluster | Mirror config tới nhiều VPS node |
+| 📤 Config Export | Export encrypted cho recovery |
+| 🤖 MCP | AI agents tương tác trực tiếp với Nginx |
 
 ---
 
@@ -147,8 +163,7 @@ docker login hub.example.com
 | Tài liệu | Mô tả |
 |:----------|:------|
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Quy trình triển khai end-to-end |
-| [docs/nginx-proxy.md](./docs/nginx-proxy.md) | Cấu hình Nginx Reverse Proxy |
-| [docs/ssl-certbot.md](./docs/ssl-certbot.md) | Quản lý SSL Certificate |
+| [docs/nginx-ui.md](./docs/nginx-ui.md) | Setup & quản trị Nginx UI |
 | [docs/firewall-ufw.md](./docs/firewall-ufw.md) | Cấu hình UFW Firewall |
 | [docs/docker-registry.md](./docs/docker-registry.md) | Quản trị Docker Registry |
 | [docs/debian-vps-setup.md](./docs/debian-vps-setup.md) | Setup VPS Debian từ đầu |
