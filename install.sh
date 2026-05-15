@@ -129,6 +129,12 @@ if command -v firewall-cmd > /dev/null 2>&1; then
     echo -e "${GREEN}  ✅ [Double-check] SSH port ${SSH_PORT} xác nhận trong Firewalld.${NC}"
 fi
 
+# ─── 5.5 Thiết lập RAM Ảo (Swap Space) ─────────────────────────────────────────
+echo -e "\n${BLUE}[+]${NC} Kiểm tra RAM Ảo (Tối ưu cho máy 1-2GB RAM)..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+chmod +x "${SCRIPT_DIR}/scripts/setup-swap.sh"
+"${SCRIPT_DIR}/scripts/setup-swap.sh"
+
 # ─── 6. Git — Clone hoặc cập nhật repo ────────────────────────────────────────
 REPO_URL="https://github.com/tuquet/launchpad-registry-stack.git"
 INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -177,7 +183,8 @@ if [ -z "$SKIP_AUTH" ]; then
         echo -e "${RED}  ❌ Mật khẩu không khớp, thử lại.${NC}"
     done
 
-    docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn "$REG_USER" "$REG_PASS" > "${INSTALL_DIR}/auth/registry.password"
+    chmod +x "${INSTALL_DIR}/scripts/manage-auth.sh"
+    "${INSTALL_DIR}/scripts/manage-auth.sh" add "$REG_USER" "$REG_PASS"
     echo -e "${GREEN}✅ Tài khoản Registry: ${REG_USER}${NC}"
 fi
 
@@ -210,7 +217,7 @@ if [ "$MODE" = "1" ]; then
     echo -e "${NC}"
     echo -e "${YELLOW}Bước tiếp theo:${NC}"
     echo "  1. Mở http://${SERVER_IP}:80 → nhập Secret ở trên → tạo admin account"
-    echo "  2. Cấu hình Reverse Proxy + SSL: xem docs/nginx-ui.md"
+    echo "  2. Cấu hình Reverse Proxy + SSL: xem README.md"
     echo "  3. Quản lý Server & Firewall: https://${SERVER_IP}:9090"
 else
     echo -e "${YELLOW}⬆️  Khởi chạy HTTP stack...${NC}"
@@ -226,4 +233,4 @@ else
     echo -e "${NC}"
 fi
 
-echo -e "${CYAN}📄 Tài liệu chi tiết: ${INSTALL_DIR}/docs/${NC}"
+echo -e "${CYAN}📄 Tài liệu chi tiết: ${INSTALL_DIR}/README.md${NC}"
