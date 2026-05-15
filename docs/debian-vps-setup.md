@@ -137,9 +137,10 @@ cd ~
 git clone https://github.com/tuquet/launchpad-registry-stack.git
 cd launchpad-registry-stack
 
-# Tạo auth
-mkdir -p auth
-docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn admin <MẬT_KHẨU_MẠNH> > auth/registry.password
+# Quản lý tài khoản truy cập Registry
+# Xem chi tiết tại: docs/docker-registry-auth.md
+chmod +x scripts/manage-auth.sh
+./scripts/manage-auth.sh add admin <MẬT_KHẨU_MẠNH>
 ```
 
 ---

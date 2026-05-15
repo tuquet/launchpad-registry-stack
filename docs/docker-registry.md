@@ -79,28 +79,17 @@ health:
 
 ---
 
-## Authentication (htpasswd)
+## Authentication (Quản lý Tài khoản)
 
-### Tạo tài khoản
+> 📄 **Tài liệu chi tiết:** [docs/docker-registry-auth.md](./docker-registry-auth.md)
 
-```bash
-mkdir -p auth
-docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn <user> <password> > auth/registry.password
-```
-
-### Thêm tài khoản (append)
+Hệ thống Registry sử dụng xác thực cơ bản (htpasswd) bằng thuật toán mã hóa Bcrypt. Thay vì thao tác thủ công, chúng tôi cung cấp script tự động:
 
 ```bash
-docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn <user2> <password2> >> auth/registry.password
+chmod +x scripts/manage-auth.sh
+./scripts/manage-auth.sh add <username> <password>
 ```
-
-### Tạo mật khẩu ngẫu nhiên
-
-```bash
-openssl rand -base64 32
-```
-
-> **⚠️ File `auth/` đã được gitignore.** Không commit credentials.
+*(Bạn có thể dùng script này để thêm user, sửa mật khẩu, xóa user, và xem danh sách)*
 
 ---
 
