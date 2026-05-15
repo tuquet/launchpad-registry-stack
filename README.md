@@ -1,153 +1,151 @@
-# 🚀 LaunchPad DevOps Ecosystem
+# 🚀 LaunchPad Registry Stack
 
-Bộ công cụ DevOps tự host hoàn chỉnh — quản trị Nginx Proxy (GUI), SSL Certificate, Firewall và Private Docker Registry trên một VPS duy nhất.
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white)](https://nginx.org/en/)
+
+**LaunchPad Registry Stack** là một hệ sinh thái mã nguồn mở độc lập, cung cấp giải pháp lưu trữ Private Docker Registry trên VPS kết hợp với giao diện quản trị Web hiện đại. 
+
+Tôi xây dựng kho lưu trữ này với mục tiêu giải phóng các nhà phát triển khỏi những dòng lệnh bảo trì máy chủ nhàm chán. Bằng cách tích hợp các công cụ mạnh mẽ nhất như **Nginx UI** (Cấp phát SSL tự động), **Dozzle** (Xem log real-time), và **Watchtower** (Tự động cập nhật), bạn có thể vận hành một Registry cấp doanh nghiệp chỉ với chưa đầy 1GB RAM.
 
 ---
 
-## 🏗️ Kiến trúc
+## ✨ Tính năng nổi bật
 
-```text
-┌──────────────────────────────────────────────────────────────────┐
-│                        VPS Production                            │
-│                                                                  │
-│  ┌─────────────┐   ┌──────────────────────────────────────────┐ │
-│  │ 🛡️ Firewalld│   │ 🔀 Nginx UI                             │ │
-│  │ + Cockpit   │─▶│ Reverse Proxy + SSL + Monitoring         │ │
-│  │ Port Guard  │   │ GUI Config Editor + Web Terminal          │ │
-│  │ Web UI:9090 │   │ Let's Encrypt Auto-Renew                 │ │
-│  └─────────────┘   │ Port 80/443                               │ │
-│                     └──────────────┼───────────────────────┘ │
-│                                    │                              │
-│                       ┌───────────┼────────────┐                │
-│                       │                         │                │
-│             ┌─────────▼───────┐    ┌─────────▼──────────┐    │
-│             │ 🐳 Registry API   │    │ 🖥️ Registry UI      │    │
-│             │ Push/Pull Images  │    │ Web Management       │    │
-│             │ Port 5000 (int)   │    │ Port 80 (int)        │    │
-│             └───────────────────┘    └────────────────────┘    │
-│                                                                  │
-│  📄 Dozzle (5MB): Log viewer │ 🔄 Watchtower (10MB): Auto-update │
-└──────────────────────────────────────────────────────────────────┘
+- 🐳 **Private Registry**: Lưu trữ Docker Image an toàn và bảo mật hoàn toàn nội bộ.
+- 🔀 **Nginx UI**: Giao diện Web quản lý Nginx, tự động cấp phát và gia hạn chứng chỉ HTTPS/SSL (Let's Encrypt) bằng một click.
+- 🔐 **Bảo mật Zero-Dependency**: Script quản lý tài khoản tự động dùng `Bcrypt` thông qua Docker container, không yêu cầu cài đặt phần mềm phụ trợ (như `apache2-utils`) trên VPS.
+- 📜 **Log Viewer**: Tích hợp Dozzle để theo dõi log của các container trực tiếp qua trình duyệt với mức tiêu thụ RAM siêu nhỏ (~5MB).
+- 🔄 **Auto Updates**: Tự động giám sát và cập nhật phiên bản vá lỗi của các Docker Image đang chạy.
+
+---
+
+## 🏗️ Sơ đồ Kiến trúc
+
+```mermaid
+flowchart TD
+    INET((🌐 Internet))
+
+    subgraph NGINX_UI ["🔀 Nginx UI (Port 80/443)"]
+        direction TB
+        PROXY("🔄 Nginx Proxy")
+        SSL("🔒 Let's Encrypt")
+    end
+
+    INET -- HTTP/HTTPS --> PROXY
+
+    subgraph BACKEND ["📦 Internal Stack"]
+        direction LR
+        API("🐳 Registry API<br/>(:5000)")
+        UI("🖥️ Registry UI<br/>(:80)")
+        DOZZLE("📋 Dozzle Logs<br/>(:8080)")
+    end
+
+    PROXY -- "Route: /v2/*" --> API
+    PROXY -- "Route: /*" --> UI
+
+    style INET fill:transparent,stroke:#888,stroke-dasharray: 5 5
+    style NGINX_UI fill:transparent,stroke:#0d6efd,stroke-width:2px
+    style BACKEND fill:transparent,stroke:#198754,stroke-width:2px
 ```
 
 ---
 
-## 📦 3 Modules
+## 🚀 Triển khai Nhanh (Automated Installation)
 
-| # | Module | Component | Tài liệu chi tiết |
-|:-:|:-------|:----------|:-------------------|
-| 1 | 🔀 **Nginx UI** | [`nginx-ui/`](./nginx-ui/) | [docs/nginx-ui.md](./docs/nginx-ui.md) |
-| 2 | 🛡️ **Firewall (Cockpit)**| [`firewall/`](./firewall/) | [docs/firewall-cockpit.md](./docs/firewall-cockpit.md) |
-| 3 | 🐳 **Docker Registry** | [`registry/`](./registry/) | [docs/docker-registry.md](./docs/docker-registry.md) |
-
-> **Nginx UI** tích hợp sẵn: Nginx Reverse Proxy + Let's Encrypt SSL + Server Monitoring + Config Backup + Log Viewer + Web Terminal + AI Assistant.
-
----
-
-## 📂 Cấu trúc dự án
-
-```text
-.
-├── README.md                              ← Bạn đang ở đây
-├── DEPLOYMENT.md                          ← Quy trình triển khai end-to-end
-├── .env.example                           ← Template biến môi trường
-│
-├── docker-compose.yml                     ← HTTP mode (dev/local)
-├── docker-compose.ssl.yml                 ← HTTPS mode (production, Nginx UI)
-│
-├── nginx-ui/                              ← [Module 1] Nginx UI (runtime, gitignored)
-├── firewall/                              ← [Module 2] Firewalld Configuration
-├── registry/                              ← [Module 3] Docker Registry
-│
-├── install.sh                             ← 🚀 One-Click Installer
-│
-├── scripts/                               ← Automation scripts
-├── docs/                                  ← Tài liệu chuyên sâu
-└── data/                                  ← Registry data (gitignored)
-```
-
----
-
-## ⚡ Khởi chạy nhanh
-
-### Chế độ HTTP (Dev / Local / Không domain)
+Nếu VPS của bạn mới tinh (Ubuntu/Debian), tôi đã chuẩn bị sẵn một script tự động cài đặt từ A-Z (Docker, Firewall, Auth, khởi chạy Stack):
 
 ```bash
-# 1. Tạo auth
-mkdir -p auth
-docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn admin <MẬT_KHẨU> > auth/registry.password
+# Clone kho lưu trữ
+git clone https://github.com/tuquet/launchpad-registry-stack.git
+cd launchpad-registry-stack
 
-# 2. Khởi chạy
+# Chạy script cài đặt tự động
+chmod +x install.sh
+./install.sh
+```
+
+---
+
+## 🛠️ Triển khai Thủ công (Manual Setup)
+
+Nếu bạn muốn tự kiểm soát quá trình cài đặt, hãy làm theo luồng (Workflow) thống nhất dưới đây:
+
+### Bước 1: Quản lý Tài khoản (Authentication)
+
+Registry sử dụng `htpasswd` để bảo vệ API. Thay vì cài các phần mềm mã hóa phức tạp lên VPS, hãy dùng Bash Script đi kèm:
+
+```bash
+# Phân quyền cho script
+chmod +x scripts/manage-auth.sh
+
+# Tạo tài khoản Admin mới (Script sẽ dùng container registry:2 để tạo mã băm Bcrypt an toàn)
+./scripts/manage-auth.sh add admin <MẬT_KHẨU_CỦA_BẠN>
+```
+*(Bạn cũng có thể dùng lệnh này để đổi mật khẩu, hoặc chạy `./scripts/manage-auth.sh list` để xem, `delete` để xóa).*
+
+### Bước 2: Khởi chạy Hệ thống
+
+Đảm bảo VPS của bạn không có Nginx hay Apache nào đang chạy và chiếm port `80`.
+
+```bash
 docker compose up -d
-
-# 3. Truy cập
-# Registry API:  http://localhost:5000
-# Registry UI:   http://localhost:5001
 ```
 
-### Chế độ HTTPS (Production / Có domain)
+### Bước 3: Hoàn tất Nginx UI Web Setup
+
+Sau khi Stack chạy lên, **Nginx UI** sẽ chặn ngay cổng `80` để bảo vệ server. Để truy cập bảng điều khiển, bạn cần một đoạn mã khóa (Install Secret):
 
 ```bash
-# 1 lệnh duy nhất — script tự động lo tất cả:
-chmod +x install.sh && ./install.sh
+# Lấy mã Install Secret từ container
+docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret
 ```
 
-> **Hoặc cài đặt thủ công theo từng bước:** xem [DEPLOYMENT.md](./DEPLOYMENT.md)
+1. Mở trình duyệt, truy cập `http://<IP_VPS>`.
+2. Dán đoạn mã **Install Secret** vừa lấy được (lưu ý không copy thừa khoảng trắng).
+3. Đăng ký tài khoản Admin và mật khẩu cho bảng quản trị Nginx UI.
+4. *(Khuyến nghị)* Vào **Settings → Authentication** để bật 2FA (Bảo mật 2 lớp).
+
+> **💡 Xử lý sự cố:** Nếu bạn mở IP mà thấy trang "Welcome to nginx!" thay vì Nginx UI, nguyên nhân do thư mục `nginx/conf.d` bị lưu file cũ. Cách xử lý:
+> ```bash
+> rm -f ./nginx-ui/nginx/conf.d/default.conf
+> docker compose restart nginx-ui
+> ```
+> Nếu quên mật khẩu Web UI: `docker exec -it registry-nginx-ui nginx-ui reset-password`
+
+### Bước 4: Cấu hình Tên miền (Reverse Proxy) & HTTPS
+
+Trong bảng điều khiển Nginx UI, hãy tạo một trang web mới:
+
+1. Vào **Sites** -> **Add Site**.
+2. **Server Name**: `hub.yourdomain.com` (Đổi thành domain của bạn, đảm bảo đã trỏ DNS về IP).
+3. **Listen**: `80`.
+4. Trong phần **Locations**, tạo 2 block cấu hình:
+
+   **Block 1: API của Docker Registry**
+   - **Path**: `/v2/`
+   - **Proxy Pass**: `http://docker-registry:5000`
+   - **Host**: `$http_host` (Quan trọng: Không được tích "Preserve Host" mà phải tự gõ vào ô Host là `$http_host`).
+   - Bật các Header: `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`.
+   - Nâng `proxy_read_timeout` lên `900`.
+   - Tắt giới hạn dung lượng: Thêm đoạn cấu hình nâng cao `client_max_body_size 0; chunked_transfer_encoding on;` ở cấp độ Server.
+
+   **Block 2: Giao diện Registry UI**
+   - **Path**: `/`
+   - **Proxy Pass**: `http://registry-ui:80`
+   - Bật các tùy chọn Header tương tự Block 1.
+
+5. **Bật SSL Tự động**:
+   - Chuyển sang Tab **SSL** -> Bật **Enable SSL** -> Chọn **Let's Encrypt** -> Điền Email -> Nhấn **Issue**.
+   - Chứng chỉ HTTPS sẽ được cấp phát và hệ thống sẽ tự động cấu hình lại Nginx ngay tắp lự.
 
 ---
 
-## 🔓 vs 🔒 So sánh 2 chế độ
+## 📈 Giám sát Hệ thống (Monitoring)
 
-| | HTTP (`docker-compose.yml`) | HTTPS (`docker-compose.ssl.yml`) |
-|:--|:--|:--|
-| Giao thức | HTTP | HTTPS (SSL) |
-| Proxy | Không có | Nginx UI (GUI) |
-| Registry port | `5000` (exposed) | Internal — qua Nginx UI |
-| UI port | `5001` (exposed) | Internal — qua Nginx UI |
-| Truy cập | `http://IP:5000` / `http://IP:5001` | `https://domain` |
-| Monitoring | Không có | CPU, RAM, Disk real-time |
-| Client cần | `insecure-registries` | Không cần gì thêm |
-| Phù hợp | Dev/Local | Production/VPS |
+- **Xem Log Container**: Nginx UI đã tích hợp sẵn công cụ quản lý container. Tuy nhiên, nếu bạn muốn xem Log trực quan siêu nhanh, có thể cấu hình Nginx UI tạo thêm proxy trỏ port nội bộ `8080` (Của ứng dụng Dozzle) ra một path đặc biệt như `/logs`.
+- **Tự động Cập nhật**: Container `watchtower` được cấu hình chạy nền, mỗi 4:00 AM sẽ quét và tự cập nhật các container có label `com.centurylinklabs.watchtower.enable=true`.
+- **Cấu hình Firewall (UFW/Firewalld)**: Chỉ cần mở duy nhất Port `80` và `443` cho hệ thống này. Toàn bộ các cổng khác (5000, 5001, 8080) đã được đóng kín và cô lập trong mạng ảo của Docker.
 
 ---
 
-## ✨ Tính năng bổ sung từ Nginx UI
-
-| Tính năng | Mô tả |
-|:----------|:------|
-| 📊 Server Monitoring | CPU, RAM, Load Average, Disk — real-time dashboard |
-| 💾 Config Backup | Tự động backup + diff + one-click rollback |
-| 📜 Log Viewer | Xem Nginx access/error log online |
-| 💻 Web Terminal | Terminal trực tiếp trong browser |
-| 🤖 AI Assistant | ChatGPT/Deepseek hỗ trợ tối ưu config |
-| 🔍 Code Completion | LLM-powered completion trong config editor |
-| 🔐 2FA | Two-factor authentication cho panel |
-| 🔄 Cluster | Mirror config tới nhiều VPS node |
-| 📤 Config Export | Export encrypted cho recovery |
-| 🤖 MCP | AI agents tương tác trực tiếp với Nginx |
-| 📄 Dozzle | Xem log container realtime qua Web (~5MB RAM) |
-| 🔄 Watchtower | Tự động cập nhật image mới lúc 4AM hàng ngày (~10MB RAM) |
-
----
-
-## 📄 Tài liệu
-
-| Tài liệu | Mô tả |
-|:----------|:------|
-| [DEPLOYMENT.md](./DEPLOYMENT.md) | Quy trình triển khai end-to-end |
-| [docs/nginx-ui.md](./docs/nginx-ui.md) | Setup & quản trị Nginx UI |
-| [docs/firewall-cockpit.md](./docs/firewall-cockpit.md) | Quản trị Firewall & Server qua Cockpit Web UI |
-| [docs/docker-registry.md](./docs/docker-registry.md) | Quản trị Docker Registry |
-| [docs/debian-vps-setup.md](./docs/debian-vps-setup.md) | Setup VPS Debian từ đầu |
-
----
-
-## 🌌 Hệ sinh thái LaunchPad
-
-Dự án này là một phần của hệ sinh thái **LaunchPad** — bộ công cụ boilerplate cho phát triển production-ready:
-
-- 📱 [**LaunchPad Mobile Native**](https://github.com/tuquet/launchpad-mobile-native): Boilerplate React Native/Expo tích hợp Strapi.
-- 💻 [**LaunchPad CMS Fullstack**](https://github.com/tuquet/launchpad-cms-fullstack): Starter kit Next.js + Strapi 5 với Docker.
-- 🐳 [**LaunchPad DevOps Ecosystem**](https://github.com/tuquet/launchpad-registry-stack): DevOps toolkit tự host.
-
-⭐️ **Nếu bạn thấy hữu ích, hãy cho repo một star trên GitHub nhé!**
+*Phát triển độc lập. Xây dựng cho tốc độ và sự đơn giản.*

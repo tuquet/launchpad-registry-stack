@@ -184,7 +184,7 @@ fi
 # ─── 8. Khởi chạy Stack ────────────────────────────────────────────────────────
 echo -e "\n${BLUE}[8/8]${NC} Khởi chạy LaunchPad Stack..."
 echo -e "${YELLOW}  Chọn chế độ:${NC}"
-echo "  1) HTTPS — Có domain (Production, dùng docker-compose.ssl.yml)"
+echo "  1) Triển khai Registry Stack (HTTPS/Nginx UI)"
 echo "  2) HTTP  — Không domain (Dev/Local, dùng docker-compose.yml)"
 read -rp "  Nhập lựa chọn [1/2, mặc định: 1]: " MODE
 MODE="${MODE:-1}"
@@ -193,7 +193,7 @@ SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "<IP_VPS>")
 
 if [ "$MODE" = "1" ]; then
     echo -e "${YELLOW}⬆️  Khởi chạy HTTPS stack...${NC}"
-    cd "${INSTALL_DIR}" && sudo docker compose -f docker-compose.ssl.yml up -d
+    cd "${INSTALL_DIR}" && sudo docker compose up -d
     sleep 3
     NGINX_UI_SECRET=$(docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret 2>/dev/null || echo "(lấy sau: docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret)")
     echo ""
