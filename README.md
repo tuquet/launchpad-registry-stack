@@ -134,9 +134,18 @@ Trong bảng điều khiển Nginx UI, hãy tạo một trang web mới:
    - **Proxy Pass**: `http://registry-ui:80`
    - Bật các tùy chọn Header tương tự Block 1.
 
-5. **Bật SSL Tự động**:
+5. **Bật SSL (Có 2 phương án):**
+
+   **▶️ Phương án 1: Dùng Cloudflare SSL (Khuyên dùng - Zero Downtime/Zero CPU)**
+   Nếu bạn dùng Cloudflare để quản lý DNS, hãy để Cloudflare lo việc mã hóa SSL (cực kỳ nhẹ cho VPS):
+   - Không cần bật công tắc Let's Encrypt trong Nginx UI.
+   - Truy cập trang quản trị Cloudflare -> Bật biểu tượng **Đám mây màu cam (Proxied)** ở bản ghi DNS.
+   - Vào mục **SSL/TLS** -> **Overview** -> Chọn chế độ **Flexible**.
+   - *Kết quả: Website tự động có HTTPS, VPS không tốn 1 byte RAM nào để sinh chứng chỉ!*
+
+   **▶️ Phương án 2: Dùng Let's Encrypt (Nội bộ)**
    - Chuyển sang Tab **SSL** -> Bật **Enable SSL** -> Chọn **Let's Encrypt** -> Điền Email -> Nhấn **Issue**.
-   - Chứng chỉ HTTPS sẽ được cấp phát và hệ thống sẽ tự động cấu hình lại Nginx ngay tắp lự.
+   - *(Lưu ý: Quá trình này sẽ tốn CPU đột xuất trong vài giây. Đảm bảo VPS không bị quá tải trước khi bấm).*
 
 ---
 
