@@ -190,47 +190,30 @@ fi
 
 # ─── 8. Khởi chạy Stack ────────────────────────────────────────────────────────
 echo -e "\n${BLUE}[8/8]${NC} Khởi chạy LaunchPad Stack..."
-echo -e "${YELLOW}  Chọn chế độ:${NC}"
-echo "  1) Triển khai Registry Stack (HTTPS/Nginx UI)"
-echo "  2) HTTP  — Không domain (Dev/Local, dùng docker-compose.yml)"
-read -rp "  Nhập lựa chọn [1/2, mặc định: 1]: " MODE
-MODE="${MODE:-1}"
 
 SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "<IP_VPS>")
 
-if [ "$MODE" = "1" ]; then
-    echo -e "${YELLOW}⬆️  Khởi chạy HTTPS stack...${NC}"
-    cd "${INSTALL_DIR}" && sudo docker compose up -d
-    sleep 3
-    NGINX_UI_SECRET=$(docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret 2>/dev/null || echo "(lấy sau: docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret)")
-    echo ""
-    echo -e "${GREEN}${BOLD}"
-    echo "╔══════════════════════════════════════════════════════════════════╗"
-    echo "║                    ✅ KHỞI CHẠY THÀNH CÔNG!                     ║"
-    echo "╠══════════════════════════════════════════════════════════════════╣"
-    printf "║  🔀 Nginx UI:  http://%-44s║\n" "${SERVER_IP}:80"
-    printf "║  🛡️  Cockpit:   https://%-43s║\n" "${SERVER_IP}:9090"
-    echo "║  📄 Dozzle:    Xem log qua Nginx UI (proxy nội bộ)             ║"
-    echo "╠══════════════════════════════════════════════════════════════════╣"
-    printf "║  🔑 Secret: %-52s║\n" "${NGINX_UI_SECRET}"
-    echo "╚══════════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-    echo -e "${YELLOW}Bước tiếp theo:${NC}"
-    echo "  1. Mở http://${SERVER_IP}:80 → nhập Secret ở trên → tạo admin account"
-    echo "  2. Cấu hình Reverse Proxy + SSL: xem README.md"
-    echo "  3. Quản lý Server & Firewall: https://${SERVER_IP}:9090"
-else
-    echo -e "${YELLOW}⬆️  Khởi chạy HTTP stack...${NC}"
-    cd "${INSTALL_DIR}" && sudo docker compose up -d
-    echo ""
-    echo -e "${GREEN}${BOLD}"
-    echo "╔══════════════════════════════════════════════════════════════════╗"
-    echo "║                    ✅ KHỞI CHẠY THÀNH CÔNG!                     ║"
-    echo "╠══════════════════════════════════════════════════════════════════╣"
-    printf "║  🐳 Registry API: http://%-43s║\n" "${SERVER_IP}:5000"
-    printf "║  🖥️  Registry UI:  http://%-43s║\n" "${SERVER_IP}:5001"
-    echo "╚══════════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-fi
+echo -e "${YELLOW}⬆️  Đang khởi động các dịch vụ (Nginx UI, Registry, Dozzle, Watchtower)...${NC}"
+cd "${INSTALL_DIR}" && sudo docker compose up -d
+sleep 3
 
-echo -e "${CYAN}📄 Tài liệu chi tiết: ${INSTALL_DIR}/README.md${NC}"
+NGINX_UI_SECRET=$(docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret 2>/dev/null || echo "(lấy sau: docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret)")
+
+echo ""
+echo -e "${GREEN}${BOLD}"
+echo "╔══════════════════════════════════════════════════════════════════╗"
+echo "║                    ✅ KHỞI CHẠY THÀNH CÔNG!                     ║"
+echo "╠══════════════════════════════════════════════════════════════════╣"
+printf "║  🔀 Nginx UI:  http://%-44s║\n" "${SERVER_IP}:80"
+printf "║  🛡️  Cockpit:   https://%-43s║\n" "${SERVER_IP}:9090"
+echo "║  📄 Dozzle:    Xem log qua Nginx UI (proxy nội bộ)             ║"
+echo "╠══════════════════════════════════════════════════════════════════╣"
+printf "║  🔑 Secret: %-52s║\n" "${NGINX_UI_SECRET}"
+echo "╚══════════════════════════════════════════════════════════════════╝"
+echo -e "${NC}"
+echo -e "${YELLOW}Bước tiếp theo:${NC}"
+echo "  1. Mở http://${SERVER_IP}:80 → nhập Secret ở trên → tạo admin account"
+echo "  2. Cấu hình Reverse Proxy + SSL: xem README.md"
+echo "  3. Quản lý Server & Firewall: https://${SERVER_IP}:9090"
+
+echo -e "\n${CYAN}📄 Tài liệu chi tiết: ${INSTALL_DIR}/README.md${NC}"
