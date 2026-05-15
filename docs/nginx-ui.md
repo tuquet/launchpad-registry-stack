@@ -59,29 +59,51 @@ flowchart TD
 ### Bước 1: Khởi chạy stack
 
 ```bash
-# Tạo auth cho Registry
-mkdir -p auth
-docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn admin <MẬT_KHẨU> > auth/registry.password
+# Tạo tài khoản auth cho Registry
+# Xem chi tiết tại: docs/docker-registry-auth.md
+chmod +x scripts/manage-auth.sh
+./scripts/manage-auth.sh add admin <MẬT_KHẨU>
 
-# Khởi chạy
+# Khởi chạy toàn hệ thống (Bao gồm Registry + Nginx UI)
 docker compose -f docker-compose.ssl.yml up -d
 ```
 
-### Bước 2: Lấy Install Secret
+## 🔐 Quản lý Tài khoản Nginx UI
+
+Khác với Docker Registry dùng file `htpasswd`, Nginx UI sử dụng hệ thống tài khoản riêng biệt được lưu trong Database SQLite nội bộ.
+
+### 1. Khởi tạo tài khoản lần đầu (Web Setup)
+
+Sau khi chạy lệnh `docker compose up -d`, lần đầu tiên truy cập vào Nginx UI, hệ thống sẽ yêu cầu bạn nhập một đoạn mã bảo mật tên là **Install Secret** để đảm bảo chỉ có chủ server mới được phép thiết lập tài khoản Admin.
 
 ```bash
-# Đọc install secret từ container
+# Đọc đoạn mã Install Secret từ bên trong container
 docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret
 ```
 
-### Bước 3: Hoàn tất Web Setup
-
 1. Truy cập `http://<IP_VPS>:80`
-2. Nhập **Install Secret** từ bước 2
-3. Tạo tài khoản admin cho Nginx UI
-4. **Bật 2FA** ngay sau khi đăng nhập (Settings → Authentication)
+2. Nhập đoạn mã **Install Secret** vừa lấy được.
+3. Hệ thống sẽ cho phép bạn tạo **Username** và **Password** cho tài khoản Admin đầu tiên.
+4. **Bảo mật:** Hãy vào mục Settings → Authentication để **Bật 2FA** ngay sau khi đăng nhập.
 
-### Bước 4: Cấu hình Reverse Proxy cho Registry
+### 2. Quên mật khẩu (Reset Password)
+
+Nếu bạn quên mật khẩu đăng nhập vào Nginx UI, bạn có thể dễ dàng can thiệp từ terminal của máy chủ VPS thông qua công cụ CLI tích hợp sẵn của Nginx UI:
+
+```bash
+# Chạy lệnh reset password trong container
+docker exec -it registry-nginx-ui nginx-ui reset-password
+```
+
+**Các bước sẽ diễn ra:**
+1. Lệnh trên sẽ hiển thị danh sách các tài khoản đang có.
+2. Nó sẽ hỏi bạn muốn reset tài khoản nào (nhập Username).
+3. Sau đó, nó sẽ yêu cầu bạn nhập mật khẩu mới.
+4. Nhập xong, bạn có thể đăng nhập lại trên Web bằng mật khẩu mới này!
+
+---
+
+## 🌐 Cấu hình Reverse Proxy cho Registry
 
 Trong Nginx UI, tạo site config mới với nội dung:
 
@@ -263,12 +285,13 @@ nginx-ui/
 | Vấn đề | Giải pháp |
 |:-------|:----------|
 | Không truy cập được Nginx UI | Kiểm tra UFW port 80, `docker ps` xem container running |
+| Truy cập port 80 bị lỗi "Welcome to nginx!" | Do thư mục `nginx-ui/nginx` đã có sẵn file `default.conf` cũ. Xóa nó đi: `rm -f nginx-ui/nginx/conf.d/default.conf` rồi chạy `docker compose restart nginx-ui` để hệ thống tự tạo lại giao diện UI. |
 | Install Secret không tìm thấy | `docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret` |
 | `413 Request Entity Too Large` | Thêm `client_max_body_size 0` trong site config |
 | `502 Bad Gateway` | Kiểm tra container name trong upstream, `docker compose ps` |
 | `504 Gateway Timeout` | Tăng `proxy_read_timeout` lên 900s+ |
 | SSL không issue được | Kiểm tra domain DNS trỏ đúng, port 80 mở |
-| Nginx UI quên password | `docker exec registry-nginx-ui nginx-ui reset-password` |
+| Nginx UI quên password | `docker exec -it registry-nginx-ui nginx-ui reset-password` |
 
 ---
 
