@@ -140,11 +140,31 @@ Trong bảng điều khiển Nginx UI, hãy tạo một trang web mới:
 
 ---
 
-## 📈 Giám sát Hệ thống (Monitoring)
+## 📈 Vận hành & Bảo trì (Operations & Maintenance)
 
-- **Xem Log Container**: Nginx UI đã tích hợp sẵn công cụ quản lý container. Tuy nhiên, nếu bạn muốn xem Log trực quan siêu nhanh, có thể cấu hình Nginx UI tạo thêm proxy trỏ port nội bộ `8080` (Của ứng dụng Dozzle) ra một path đặc biệt như `/logs`.
-- **Tự động Cập nhật**: Container `watchtower` được cấu hình chạy nền, mỗi 4:00 AM sẽ quét và tự cập nhật các container có label `com.centurylinklabs.watchtower.enable=true`.
-- **Cấu hình Firewall (UFW/Firewalld)**: Chỉ cần mở duy nhất Port `80` và `443` cho hệ thống này. Toàn bộ các cổng khác (5000, 5001, 8080) đã được đóng kín và cô lập trong mạng ảo của Docker.
+### 1. Dọn dẹp Rác định kỳ (Garbage Collection)
+Khi bạn thường xuyên đẩy (push) Image lên Registry, hoặc thay thế Image cũ cùng một tag (`latest`), Docker Registry vẫn lưu giữ những "tảng băng chìm" (các data block không còn được sử dụng) khiến ổ cứng bị đầy. Để dọn dẹp không gian lưu trữ:
+
+```bash
+# Cấp quyền và chạy Script tôi đã chuẩn bị sẵn
+chmod +x scripts/clean-registry.sh
+./scripts/clean-registry.sh
+```
+*(Script này sẽ an toàn quét qua ổ đĩa và gọi lệnh `garbage-collect` bên trong container Registry để giải phóng dung lượng).*
+
+### 2. Tự động cập nhật (Watchtower)
+Thay vì phải thỉnh thoảng nhớ gõ lệnh update các phần mềm hạ tầng (Nginx UI, Dozzle, v.v.), **Watchtower** làm việc đó một cách hoàn toàn tự động!
+- **Hoạt động ngầm:** Mỗi ngày vào lúc 4:00 AM sáng, Watchtower sẽ tự động kiểm tra trên Docker Hub xem có bản vá lỗi (patch) nào mới cho các phần mềm này không.
+- **Tự động tải và thay thế:** Nếu có, nó sẽ âm thầm tải về, tắt container cũ và khởi động lại với cấu hình y nguyên (Zero-Downtime update).
+- **Phạm vi an toàn:** Nó chỉ quét những container nào có gắn nhãn `com.centurylinklabs.watchtower.enable=true` (nghĩa là nó chỉ tự cập nhật hệ sinh thái hạ tầng DevOps này, KHÔNG BAO GIỜ chạm vào các ứng dụng/source code của bạn chạy trên VPS).
+
+### 3. Xem Log Container (Dozzle)
+Dozzle là một ứng dụng "nhẹ tựa lông hồng" (tiêu tốn ~5MB RAM). 
+- Thay vì phải gõ lệnh `docker logs -f` rườm rà, bạn có thể thiết lập Nginx UI tạo một Proxy Pass trỏ cổng `8080` của Dozzle ra một đường dẫn đặc biệt (VD: `hub.yourdomain.com/logs`). 
+- Giao diện của Dozzle cho phép bạn theo dõi theo thời gian thực (real-time) và tìm kiếm chữ trong log của toàn bộ hệ thống cực kỳ nhanh chóng.
+
+### 4. Cấu hình Tường lửa (Firewall)
+Hệ thống này được thiết kế theo tiêu chuẩn đóng kín. Bạn chỉ cần mở duy nhất Port `80` và `443` cho VPS. Toàn bộ các cổng nội bộ khác (`5000`, `5001`, `8080`) đã được cô lập an toàn trong mạng ảo của Docker.
 
 ---
 
