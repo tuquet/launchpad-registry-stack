@@ -13,7 +13,7 @@
 #   - dozzle         → Xem log container realtime (~5MB RAM)
 #   - watchtower     → Tự động update images (~10MB RAM)
 #
-# Khởi chạy:  docker compose -f docker-compose.ssl.yml up -d
+# Khởi chạy:  docker compose up -d
 # Nginx UI:   http://<IP>:80 → hoàn tất setup lần đầu
 # =============================================================================
 

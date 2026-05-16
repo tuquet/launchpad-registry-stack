@@ -55,7 +55,7 @@ Script sẽ thực hiện:
 Nếu bạn expose port trong docker-compose (vd: `ports: - "5000:5000"`), Docker sẽ mở toang port 5000 ra thế giới dù Firewalld có chặn đi nữa.
 
 ### Giải pháp (Khuyến nghị)
-Thay vì dùng `ports`, hãy dùng `expose` trong `docker-compose.yml` (Đã được áp dụng sẵn trong cấu hình của dự án).
+Thay vì dùng `ports`, hãy dùng `expose` trong `compose.yml` (Đã được áp dụng sẵn trong cấu hình của dự án).
 ```yaml
 # ❌ Expose ra ngoài — bypass Firewall
 ports:

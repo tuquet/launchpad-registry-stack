@@ -65,7 +65,7 @@ chmod +x scripts/manage-auth.sh
 ./scripts/manage-auth.sh add admin <MẬT_KHẨU>
 
 # Khởi chạy toàn hệ thống (Bao gồm Registry + Nginx UI)
-docker compose -f docker-compose.ssl.yml up -d
+docker compose up -d
 ```
 
 ## 🔐 Quản lý Tài khoản Nginx UI

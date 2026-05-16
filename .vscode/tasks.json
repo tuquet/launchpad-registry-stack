@@ -48,7 +48,7 @@
     {
       "label": "🔒 registry: up (HTTPS + Nginx UI)",
       "type": "shell",
-      "command": "docker compose -f docker-compose.ssl.yml up -d",
+      "command": "docker compose up -d",
       "group": "build",
       "presentation": {
         "reveal": "always",

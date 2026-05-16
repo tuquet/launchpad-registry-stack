@@ -108,7 +108,7 @@ docker compose up -d
 
 ```bash
 # Xem docs/nginx-ui.md để setup SSL qua Nginx UI
-docker compose -f docker-compose.ssl.yml up -d
+docker compose up -d
 ```
 
 - Registry: `https://hub.example.com`

@@ -140,7 +140,7 @@ REPO_URL="https://github.com/tuquet/launchpad-registry-stack.git"
 INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo -e "\n${BLUE}[6/8]${NC} Kiểm tra repository..."
-if [ -f "${INSTALL_DIR}/docker-compose.yml" ]; then
+if [ -f "${INSTALL_DIR}/compose.yml" ]; then
     if [ -d "${INSTALL_DIR}/.git" ]; then
         echo -e "${YELLOW}  🔄 Đang cập nhật repo (git pull)...${NC}"
         git -C "${INSTALL_DIR}" pull --quiet

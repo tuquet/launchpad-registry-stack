@@ -30,7 +30,7 @@ sequenceDiagram
 
 | | 🔓 HTTP (không domain) | 🔒 HTTPS (có domain) |
 |:--|:--|:--|
-| **File compose** | `docker-compose.yml` | `docker-compose.ssl.yml` |
+| **File compose** | `compose.yml` | `compose.yml` |
 | **Proxy** | Không có | Nginx UI (GUI) |
 | **Truy cập** | `http://<IP>:5000` | `https://hub.example.com` |
 | **Firewall ports** | `22, 80, 5000, 5001, 9090` | `22, 80, 443, 9090` |
@@ -156,7 +156,7 @@ docker compose up -d
 **🔒 HTTPS (có domain — dùng Nginx UI):**
 
 ```bash
-docker compose -f docker-compose.ssl.yml up -d
+docker compose up -d
 ```
 
 **Kiểm tra:**
@@ -232,7 +232,7 @@ IMAGE_TAG=v1
 
 ```bash
 docker login localhost:5000        # hoặc hub.example.com
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f compose.prod.yml up -d
 ```
 
 ---
@@ -250,8 +250,8 @@ docker push <REGISTRY>/strapi-app:v2
 
 ```bash
 sed -i 's/IMAGE_TAG=v1/IMAGE_TAG=v2/' .env
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f compose.prod.yml pull
+docker compose -f compose.prod.yml up -d
 ```
 
 ---
@@ -265,7 +265,7 @@ cd ~/launchpad-registry-stack
 docker compose down
 
 # 2. Chạy lại với Nginx UI
-docker compose -f docker-compose.ssl.yml up -d
+docker compose up -d
 
 # 3. Hoàn tất Nginx UI setup (xem Bước 7)
 docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret
