@@ -26,9 +26,9 @@ services:
     image: registry:2
     container_name: docker-registry
     restart: always
-    # Không expose port ra ngoài — Nginx UI sẽ proxy qua HTTPS
-    expose:
-      - "5000"
+    # Expose port ra ngoài để push trực tiếp bằng IP
+    ports:
+      - "5000:5000"
     volumes:
       - ./registry/config/registry-config.yml:/etc/docker/registry/config.yml:ro
       - ./data:/var/lib/registry
