@@ -135,6 +135,11 @@ Tạo hai bản ghi **A Record** trỏ về IP của VPS:
 #### B. Cấu hình Nginx UI Subdomain
 Tạo file `/etc/nginx/sites-available/nginx-ui.yourdomain.com` (hoặc cấu hình trực tiếp qua giao diện Nginx UI):
 ```nginx
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
 server {
     listen 80;
     listen [::]:80;
@@ -142,7 +147,7 @@ server {
     client_max_body_size 128M;
 
     location / {
-        proxy_pass http://127.0.0.1:9000;
+        proxy_pass http://127.0.0.1:9000/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -152,7 +157,7 @@ server {
         # Hỗ trợ Web Terminal bên trong Nginx UI
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "Upgrade";
+        proxy_set_header Connection $connection_upgrade;
         proxy_read_timeout 900s;
     }
 }
