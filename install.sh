@@ -162,7 +162,7 @@ SKIP_AUTH=""
 if [ -f "${INSTALL_DIR}/auth/registry.password" ]; then
     echo -e "${YELLOW}⚠️  File auth/registry.password đã tồn tại.${NC}"
     read -rp "  Ghi đè và tạo tài khoản mới? (y/N): " OVERWRITE
-    if [[ ! "$OVERWRITE" =~ ^[Yy]$ ]]; then
+    if [ "$OVERWRITE" != "y" ] && [ "$OVERWRITE" != "Y" ]; then
         echo -e "${GREEN}✅ Giữ nguyên tài khoản cũ${NC}"
         SKIP_AUTH=true
     fi
