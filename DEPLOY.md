@@ -124,9 +124,86 @@ Hệ thống đi kèm **Dozzle** - ứng dụng giám sát log siêu nhẹ (~5MB
 3. Bật **Basic Auth (Mật khẩu bảo vệ)** trỏ tới đường dẫn file password bên trong container Nginx UI: `/etc/nginx/registry.password` (file mật khẩu này đã được script cài đặt tự động đồng bộ).
 4. Kích hoạt WebSockets (`Upgrade`, `Connection "Upgrade"`) và nâng cấu hình timeout đọc `proxy_read_timeout` lên `900s` để stream log thời gian thực mượt mà mà không bị đứt kết nối.
 
-### 3. Tự động cập nhật (Watchtower)
+### 3. Cấu hình Subdomain Chuyên nghiệp cho Nginx UI & Cockpit
+Để truy cập các cổng quản trị hệ thống một cách chuyên nghiệp qua tên miền (thay vì nhập cổng IP thô), hãy thực hiện:
+
+#### A. Trỏ Tên miền phụ (DNS)
+Tạo hai bản ghi **A Record** trỏ về IP của VPS:
+* `nginx-ui.yourdomain.com` -> `<IP_VPS>`
+* `cockpit.yourdomain.com` -> `<IP_VPS>`
+
+#### B. Cấu hình Nginx UI Subdomain
+Tạo file `/etc/nginx/sites-available/nginx-ui.yourdomain.com` (hoặc cấu hình trực tiếp qua giao diện Nginx UI):
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name nginx-ui.yourdomain.com;
+    client_max_body_size 128M;
+
+    location / {
+        proxy_pass http://127.0.0.1:9000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $http_host;
+        
+        # Hỗ trợ Web Terminal bên trong Nginx UI
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_read_timeout 900s;
+    }
+}
+```
+*Tạo liên kết tượng trưng (symlink) sang `sites-enabled/` và reload Nginx.*
+
+#### C. Cấu hình Cockpit Subdomain
+1. **Thiết lập Origins trên Host VPS**:
+   Tạo hoặc chỉnh sửa tệp `/etc/cockpit/cockpit.conf` trên host để cho phép kết nối WebSocket từ domain proxy:
+   ```ini
+   [WebService]
+   Origins = https://cockpit.yourdomain.com http://cockpit.yourdomain.com
+   ProtocolHeader = X-Forwarded-Proto
+   AllowUnencrypted = true
+   ```
+   *Khởi động lại Cockpit service để nhận cấu hình: `sudo systemctl restart cockpit`*
+
+2. **Tạo cấu hình Nginx Subdomain**:
+   Tạo file `/etc/nginx/sites-available/cockpit.yourdomain.com` trong container Nginx UI:
+   ```nginx
+   server {
+       listen 80;
+       listen [::]:80;
+       server_name cockpit.yourdomain.com;
+
+       location / {
+           # Kết nối tới Cockpit trên host thông qua IP Gateway Docker bridge
+           proxy_pass https://172.18.0.1:9090;
+           
+           proxy_set_header Host $http_host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+           
+           # Bỏ qua chứng chỉ SSL tự ký nội bộ của Cockpit
+           proxy_ssl_verify off;
+
+           # Hỗ trợ Web Terminal của Cockpit (WebSocket Stream)
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection "Upgrade";
+           proxy_read_timeout 900s;
+       }
+   }
+   ```
+   *Liên kết tượng trưng sang `sites-enabled/` và reload Nginx.*
+
+### 4. Tự động cập nhật (Watchtower)
 Watchtower hoạt động ngầm vào lúc 4:00 AM mỗi ngày. Nó sẽ kiểm tra phiên bản mới của các hạ tầng như Nginx UI, Dozzle. Nếu có bản vá lỗi, nó sẽ tự động tải về và khởi động lại mà không gây gián đoạn (Zero-Downtime update).
 *(Lưu ý: Nó chỉ tự cập nhật hạ tầng có gắn nhãn, không đụng tới các ứng dụng riêng của bạn).*
 
-### 4. Cấu hình Tường lửa (Firewall)
+### 5. Cấu hình Tường lửa (Firewall)
 Theo chuẩn bảo mật, bạn chỉ cần mở Port `80` và `443` cho VPS. Các port nội bộ như `5000`, `8080` chỉ giao tiếp kín trong mạng ảo Docker, tuyệt đối không mở ra Public.
+
