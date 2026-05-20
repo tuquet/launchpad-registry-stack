@@ -10,7 +10,7 @@
 # Tìm đường dẫn thư mục gốc của project (cha của thư mục scripts)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 AUTH_DIR="$PROJECT_ROOT/auth"
-HTPASSWD_FILE="$AUTH_DIR/htpasswd"
+HTPASSWD_FILE="$AUTH_DIR/registry.password"
 
 # Đảm bảo thư mục và file tồn tại
 mkdir -p "$AUTH_DIR"
@@ -77,7 +77,7 @@ case "$1" in
     ;;
     
   list)
-    echo "📋 Danh sách các user hiện có trong file htpasswd:"
+    echo "📋 Danh sách các user hiện có trong file registry.password:"
     if [ ! -s "$HTPASSWD_FILE" ]; then
       echo "(Chưa có tài khoản nào được tạo)"
     else

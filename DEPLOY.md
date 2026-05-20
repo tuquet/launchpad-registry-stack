@@ -116,9 +116,13 @@ chmod +x scripts/clean-registry.sh
 ```
 *(Script này sẽ gọi lệnh `garbage-collect` bên trong container Registry để quét và xóa sạch rác một cách an toàn).*
 
-### 2. Xem Log Hệ Thống (Dozzle)
-Hệ thống đi kèm **Dozzle** - ứng dụng giám sát log siêu nhẹ (~5MB RAM). 
-Bạn có thể cấu hình thêm một block Proxy trong Nginx UI để trỏ path `/logs` (hoặc cổng `8080`) về `http://dozzle:8080`. Tại đây bạn có thể xem log theo thời gian thực (real-time) cực kỳ trực quan qua trình duyệt.
+### 2. Xem Log Hệ Thống Bảo Mật (Dozzle)
+Hệ thống đi kèm **Dozzle** - ứng dụng giám sát log siêu nhẹ (~5MB RAM). Để xem log qua trình duyệt web một cách an toàn (được bảo vệ bằng mật khẩu và SSL thông qua Nginx UI):
+
+1. Trong **Nginx UI**, tạo một **Site (Reverse Proxy)** cho subdomain riêng (ví dụ: `logs.yourdomain.com`).
+2. Trỏ **Proxy Pass** về: `http://dozzle:8080` (Duy trì giao tiếp kín trong mạng nội bộ Docker, tuyệt đối không lộ cổng ra ngoài Internet).
+3. Bật **Basic Auth (Mật khẩu bảo vệ)** trỏ tới đường dẫn file password bên trong container Nginx UI: `/etc/nginx/registry.password` (file mật khẩu này đã được script cài đặt tự động đồng bộ).
+4. Kích hoạt WebSockets (`Upgrade`, `Connection "Upgrade"`) và nâng cấu hình timeout đọc `proxy_read_timeout` lên `900s` để stream log thời gian thực mượt mà mà không bị đứt kết nối.
 
 ### 3. Tự động cập nhật (Watchtower)
 Watchtower hoạt động ngầm vào lúc 4:00 AM mỗi ngày. Nó sẽ kiểm tra phiên bản mới của các hạ tầng như Nginx UI, Dozzle. Nếu có bản vá lỗi, nó sẽ tự động tải về và khởi động lại mà không gây gián đoạn (Zero-Downtime update).

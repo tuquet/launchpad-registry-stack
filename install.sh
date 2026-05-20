@@ -188,6 +188,12 @@ if [ -z "$SKIP_AUTH" ]; then
     echo -e "${GREEN}✅ Tài khoản Registry: ${REG_USER}${NC}"
 fi
 
+# ─── Đảm bảo đồng bộ file mật khẩu sang thư mục Nginx UI ─────────────────────────
+if [ -f "${INSTALL_DIR}/auth/registry.password" ]; then
+    mkdir -p "${INSTALL_DIR}/nginx-ui/nginx"
+    cp "${INSTALL_DIR}/auth/registry.password" "${INSTALL_DIR}/nginx-ui/nginx/registry.password"
+fi
+
 # ─── 8. Khởi chạy Stack ────────────────────────────────────────────────────────
 echo -e "\n${BLUE}[8/8]${NC} Khởi chạy LaunchPad Stack..."
 
