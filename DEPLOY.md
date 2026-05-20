@@ -206,9 +206,8 @@ server {
    *Liên kết tượng trưng sang `sites-enabled/` và reload Nginx.*
 
 ### 4. Tự động cập nhật (Watchtower)
-Watchtower hoạt động ngầm vào lúc 4:00 AM mỗi ngày. Nó sẽ kiểm tra phiên bản mới của các hạ tầng như Nginx UI, Dozzle. Nếu có bản vá lỗi, nó sẽ tự động tải về và khởi động lại mà không gây gián đoạn (Zero-Downtime update).
-*(Lưu ý: Nó chỉ tự cập nhật hạ tầng có gắn nhãn, không đụng tới các ứng dụng riêng của bạn).*
+Watchtower hoạt động ngầm và kiểm tra liên tục mỗi 2 phút (thay vì 4h sáng hàng ngày, cấu hình qua `WATCHTOWER_POLL_INTERVAL=120`). Nó sẽ kiểm tra phiên bản mới của các hạ tầng như Nginx UI, Dozzle, cũng như các ứng dụng như Next.js, Strapi. Nếu có bản vá lỗi hoặc hình ảnh mới được build và push lên Registry, Watchtower sẽ tự động tải về và khởi động lại container tương ứng mà không gây gián đoạn (Zero-Downtime update).
+*(Lưu ý: Chỉ các container có nhãn `"com.centurylinklabs.watchtower.enable=true"` mới được Watchtower tự động giám sát và cập nhật).*
 
 ### 5. Cấu hình Tường lửa (Firewall)
 Theo chuẩn bảo mật, bạn chỉ cần mở Port `80` và `443` cho VPS. Các port nội bộ như `5000`, `8080` chỉ giao tiếp kín trong mạng ảo Docker, tuyệt đối không mở ra Public.
-

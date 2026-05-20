@@ -115,7 +115,7 @@ services:
   # ============================================
   # Watchtower — Tự động update Docker Images
   #
-  # RAM: ~10MB | Chạy nền, check lúc 4:00 AM
+  # RAM: ~10MB | Chạy nền, check liên tục mỗi 2 phút (WATCHTOWER_POLL_INTERVAL=120)
   # Chỉ update container có label watchtower.enable=true
   # Tự động xóa image cũ sau khi update
   # ============================================
