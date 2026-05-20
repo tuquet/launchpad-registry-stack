@@ -44,9 +44,9 @@ services:
     image: joxit/docker-registry-ui:latest
     container_name: registry-ui
     restart: always
-    # Không expose port ra ngoài — Nginx UI sẽ proxy qua HTTPS
-    expose:
-      - "80"
+    # Map port 5001 cho Registry UI
+    ports:
+      - "5001:80"
     environment:
       - NGINX_PROXY_PASS_URL=http://registry:5000
       - DELETE_IMAGES=true

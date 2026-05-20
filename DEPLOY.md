@@ -80,13 +80,13 @@ docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret
 
 ## 🌐 Cấu hình Tên miền (Reverse Proxy) & HTTPS
 
-Trong bảng điều khiển Nginx UI, tạo một trang web mới (**Sites** -> **Add Site**):
+Để cấu hình tên miền cho Docker Registry và giao diện quản lý Registry UI:
 
+### 1. Cấu hình Registry API (`hub.yourdomain.com`)
+Tạo một trang web mới trong Nginx UI (**Sites** -> **Add Site**):
 1. **Server Name**: `hub.yourdomain.com` (Đảm bảo đã trỏ DNS về IP VPS).
 2. **Listen**: `80`.
-3. Trong phần **Locations**, tạo 2 block cấu hình:
-
-   **Block 1: API của Docker Registry**
+3. Trong phần **Locations**, tạo block cấu hình cho API của Docker Registry:
    - **Path**: `/v2/`
    - **Proxy Pass**: `http://docker-registry:5000`
    - **Host**: `$http_host` *(Quan trọng: Gõ tay `$http_host` vào ô, KHÔNG tích "Preserve Host")*.
@@ -94,14 +94,18 @@ Trong bảng điều khiển Nginx UI, tạo một trang web mới (**Sites** ->
    - Nâng `proxy_read_timeout` lên `900`.
    - Thêm đoạn cấu hình nâng cao vào mục Config của cấp Server: `client_max_body_size 0; chunked_transfer_encoding on;` (Để bỏ giới hạn dung lượng file tải lên).
 
-   **Block 2: Giao diện Registry UI**
+### 2. Cấu hình Registry UI (`registry-ui.nhaateliertattoo.com`)
+Tạo một trang web riêng cho giao diện Registry UI (đại diện cho cổng `5001` trên Host):
+1. **Server Name**: `registry-ui.nhaateliertattoo.com` (Đảm bảo đã trỏ DNS về IP VPS).
+2. **Listen**: `80`.
+3. Trong phần **Locations**, tạo block cấu hình:
    - **Path**: `/`
    - **Proxy Pass**: `http://registry-ui:80`
-   - Bật các tùy chọn Header tương tự Block 1.
+   - Bật các Header tương tự như Registry API (`X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`).
 
-4. **Bật SSL (HTTPS):**
-   - Chuyển sang Tab **SSL** -> Bật **Enable SSL** -> Chọn **Let's Encrypt** -> Điền Email -> Nhấn **Issue**.
-   - *(Lưu ý: Nếu bạn đang sử dụng proxy đám mây màu cam của Cloudflare, bạn có thể thiết lập SSL linh hoạt trực tiếp trên Cloudflare và bỏ qua bước Let's Encrypt này để tiết kiệm tài nguyên).*
+### 3. Bật SSL (HTTPS)
+* Chuyển sang Tab **SSL** -> Bật **Enable SSL** -> Chọn **Let's Encrypt** -> Điền Email -> Nhấn **Issue** cho từng tên miền phụ.
+* *(Lưu ý: Nếu bạn đang sử dụng proxy đám mây màu cam của Cloudflare, bạn có thể thiết lập SSL linh hoạt trực tiếp trên Cloudflare và bỏ qua bước Let's Encrypt này để tiết kiệm tài nguyên).*
 
 ---
 
