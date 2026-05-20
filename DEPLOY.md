@@ -123,10 +123,10 @@ chmod +x scripts/clean-registry.sh
 ### 2. Xem Log Hệ Thống Bảo Mật (Dozzle)
 Hệ thống đi kèm **Dozzle** - ứng dụng giám sát log siêu nhẹ (~5MB RAM). Để xem log qua trình duyệt web một cách an toàn (được bảo vệ bằng mật khẩu và SSL thông qua Nginx UI):
 
-1. Trong **Nginx UI**, tạo một **Site (Reverse Proxy)** cho subdomain riêng (ví dụ: `logs.yourdomain.com`).
+1. Trong **Nginx UI**, tạo một **Site (Reverse Proxy)** cho subdomain riêng (ví dụ: `dozze.yourdomain.com`).
 2. Trỏ **Proxy Pass** về: `http://dozzle:8080` (Duy trì giao tiếp kín trong mạng nội bộ Docker, tuyệt đối không lộ cổng ra ngoài Internet).
 3. Bật **Basic Auth (Mật khẩu bảo vệ)** trỏ tới đường dẫn file password bên trong container Nginx UI: `/etc/nginx/registry.password` (file mật khẩu này đã được script cài đặt tự động đồng bộ).
-4. Kích hoạt WebSockets (`Upgrade`, `Connection "Upgrade"`) và nâng cấu hình timeout đọc `proxy_read_timeout` lên `900s` để stream log thời gian thực mượt mà mà không bị đứt kết nối.
+4. Kích hoạt WebSockets (`Upgrade`, `Connection "Upgrade"`) và nâng cấu hình timeout đọc `proxy_read_timeout` lên `900s` để stream log thời gian thực mượt mượt mà mà không bị đứt kết nối.
 
 ### 3. Cấu hình Subdomain Chuyên nghiệp cho Nginx UI & Cockpit
 Để truy cập các cổng quản trị hệ thống một cách chuyên nghiệp qua tên miền (thay vì nhập cổng IP thô), hãy thực hiện:
