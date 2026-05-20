@@ -127,7 +127,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TZ=Asia/Ho_Chi_Minh
-      - WATCHTOWER_SCHEDULE=0 0 4 * * *
+      - WATCHTOWER_POLL_INTERVAL=120
       - WATCHTOWER_LABEL_ENABLE=true
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_DEBUG=false
