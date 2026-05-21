@@ -2,180 +2,67 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "🔑 registry: login",
-      "type": "shell",
-      "command": "docker login localhost:5000",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": [],
-      "icon": {
-        "id": "key",
-        "color": "terminal.ansiYellow"
-      }
-    },
-    {
-      "label": "🔐 registry: reset-password",
-      "type": "shell",
-      "command": "docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn ${input:user} ${input:pass} > auth/registry.password",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": [],
-      "icon": {
-        "id": "lock",
-        "color": "terminal.ansiYellow"
-      }
-    },
-    {
-      "label": "🚀 registry: up (HTTP)",
+      "label": "🚀 [Registry] Up",
+      "detail": "Khởi chạy Docker Registry và Nginx UI dưới nền",
       "type": "shell",
       "command": "docker compose up -d",
-      "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "group": "registry"
-      },
+      "presentation": { "reveal": "always", "panel": "shared", "group": "registry", "clear": true },
       "problemMatcher": [],
-      "icon": {
-        "id": "rocket",
-        "color": "terminal.ansiYellow"
-      }
+      "icon": { "id": "rocket", "color": "terminal.ansiYellow" }
     },
     {
-      "label": "🔒 registry: up (HTTPS + Nginx UI)",
-      "type": "shell",
-      "command": "docker compose up -d",
-      "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "group": "registry"
-      },
-      "problemMatcher": [],
-      "icon": {
-        "id": "lock",
-        "color": "terminal.ansiYellow"
-      }
-    },
-    {
-      "label": "🛑 registry: down",
+      "label": "🛑 [Registry] Down",
+      "detail": "Tắt toàn bộ dịch vụ Registry",
       "type": "shell",
       "command": "docker compose down",
-      "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "group": "registry"
-      },
+      "presentation": { "reveal": "always", "panel": "shared", "group": "registry", "clear": true },
       "problemMatcher": [],
-      "icon": {
-        "id": "stop",
-        "color": "terminal.ansiRed"
-      }
+      "icon": { "id": "stop", "color": "terminal.ansiRed" }
     },
     {
-      "label": "📜 registry: logs",
+      "label": "🔑 [Auth] Login",
+      "detail": "Đăng nhập Docker client vào Registry cục bộ",
       "type": "shell",
-      "command": "docker compose logs -f",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "group": "registry"
-      },
+      "command": "docker login localhost:5000",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
       "problemMatcher": [],
-      "icon": {
-        "id": "file-text",
-        "color": "terminal.ansiCyan"
-      }
+      "icon": { "id": "key", "color": "terminal.ansiYellow" }
     },
     {
-      "label": "🔄 registry: restart",
+      "label": "🔐 [Auth] Reset Password",
+      "detail": "Tạo lại mật khẩu bảo vệ Registry (ghi vào file htpasswd)",
       "type": "shell",
-      "command": "docker compose restart",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "group": "registry"
-      },
+      "command": "docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn ${input:user} ${input:pass} > auth/registry.password",
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
       "problemMatcher": [],
-      "icon": {
-        "id": "sync",
-        "color": "terminal.ansiGreen"
-      }
+      "icon": { "id": "shield", "color": "terminal.ansiYellow" }
     },
     {
-      "label": "🧹 registry: gc",
+      "label": "🧹 [Maint] Garbage Collect",
+      "detail": "Dọn dẹp rác hệ thống (xóa các Docker blobs mồ côi)",
       "type": "shell",
       "command": "docker exec docker-registry bin/registry garbage-collect /etc/docker/registry/config.yml",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
       "problemMatcher": [],
-      "icon": {
-        "id": "trash",
-        "color": "terminal.ansiRed"
-      }
+      "icon": { "id": "trash", "color": "terminal.ansiRed" }
     },
     {
-      "label": "🔒 nginx-ui: install-secret",
+      "label": "📜 [Logs] Open Dozzle UI",
+      "detail": "Xem log các container bằng giao diện Dozzle (Web UI)",
       "type": "shell",
-      "command": "docker exec registry-nginx-ui cat /etc/nginx-ui/.install_secret",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
+      "command": "start http://localhost:8888",
+      "presentation": { "reveal": "silent", "panel": "shared", "clear": true },
       "problemMatcher": [],
-      "icon": {
-        "id": "lock",
-        "color": "terminal.ansiYellow"
-      }
+      "icon": { "id": "browser", "color": "terminal.ansiMagenta" }
     },
     {
-      "label": "📊 nginx-ui: logs",
-      "type": "shell",
-      "command": "docker logs -f registry-nginx-ui",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": [],
-      "icon": {
-        "id": "graph",
-        "color": "terminal.ansiMagenta"
-      }
-    },
-    {
-      "label": "🛡️ firewall: setup-cockpit",
+      "label": "🛡️ [SysAdmin] Setup Cockpit Firewall",
+      "detail": "Cấu hình tường lửa cho máy chủ quản trị Cockpit",
       "type": "shell",
       "command": "chmod +x scripts/setup-cockpit.sh && ./scripts/setup-cockpit.sh",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
       "problemMatcher": [],
-      "icon": {
-        "id": "play",
-        "color": "terminal.ansiWhite"
-      }
-    },
-    {
-      "label": "🛡️ firewall: status",
-      "type": "shell",
-      "command": "sudo firewall-cmd --list-all",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": [],
-      "icon": {
-        "id": "play",
-        "color": "terminal.ansiWhite"
-      }
+      "icon": { "id": "play", "color": "terminal.ansiWhite" }
     }
   ],
   "inputs": [

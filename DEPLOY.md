@@ -125,6 +125,8 @@ Hệ thống đi kèm **Dozzle** - ứng dụng giám sát log siêu nhẹ (~5MB
 
 1. Trong **Nginx UI**, tạo một **Site (Reverse Proxy)** cho subdomain riêng (ví dụ: `dozzle.yourdomain.com`).
 2. Trỏ **Proxy Pass** về: `http://dozzle:8080` (Duy trì giao tiếp kín trong mạng nội bộ Docker, tuyệt đối không lộ cổng ra ngoài Internet).
+   > [!NOTE]
+   > Trên Host (VPS), cổng ánh xạ ngoài của Dozzle đã được đổi thành `127.0.0.1:8888:8080` để giải phóng cổng `8080` tránh xung đột với Adminer/Nginx của CMS Stack. Mặc dù cổng trên Host thay đổi, các cấu hình proxy pass nội bộ từ Nginx UI (nằm cùng mạng Docker) vẫn trỏ tới `http://dozzle:8080` bình thường. Nếu bạn sử dụng Nginx cài trực tiếp trên Host (ngoài Docker), hãy trỏ proxy pass tới `http://127.0.0.1:8888`.
 3. Bật **Basic Auth (Mật khẩu bảo vệ)** trỏ tới đường dẫn file password bên trong container Nginx UI: `/etc/nginx/registry.password` (file mật khẩu này đã được script cài đặt tự động đồng bộ).
 4. Kích hoạt WebSockets (`Upgrade`, `Connection "Upgrade"`) và nâng cấu hình timeout đọc `proxy_read_timeout` lên `900s` để stream log thời gian thực mượt mà mà không bị đứt kết nối.
 
@@ -214,4 +216,4 @@ Watchtower hoạt động ngầm và kiểm tra liên tục mỗi 2 phút (thay 
 *(Lưu ý: Chỉ các container có nhãn `"com.centurylinklabs.watchtower.enable=true"` mới được Watchtower tự động giám sát và cập nhật).*
 
 ### 5. Cấu hình Tường lửa (Firewall)
-Theo chuẩn bảo mật, bạn chỉ cần mở Port `80` và `443` cho VPS. Các port nội bộ như `5000`, `8080` chỉ giao tiếp kín trong mạng ảo Docker, tuyệt đối không mở ra Public.
+Theo chuẩn bảo mật, bạn chỉ cần mở Port `80` và `443` cho VPS. Các port nội bộ/localhost như `5000`, `8888`, `9090` chỉ giao tiếp kín trong mạng ảo Docker hoặc localhost VPS, tuyệt đối không mở ra Public.
