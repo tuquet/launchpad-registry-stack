@@ -2,8 +2,8 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "🚀 [Registry] Up",
-      "detail": "Khởi chạy Docker Registry và Nginx UI dưới nền",
+      "label": "[Compose] Up",
+      "detail": "Khởi chạy toàn bộ dịch vụ Docker theo cấu hình docker-compose.yml",
       "type": "shell",
       "command": "docker compose up -d",
       "presentation": { "reveal": "always", "panel": "shared", "group": "registry", "clear": true },
@@ -11,8 +11,8 @@
       "icon": { "id": "rocket", "color": "terminal.ansiYellow" }
     },
     {
-      "label": "🛑 [Registry] Down",
-      "detail": "Tắt toàn bộ dịch vụ Registry",
+      "label": "[Compose] Down",
+      "detail": "Dừng toàn bộ dịch vụ Docker theo cấu hình docker-compose.yml",
       "type": "shell",
       "command": "docker compose down",
       "presentation": { "reveal": "always", "panel": "shared", "group": "registry", "clear": true },
@@ -20,7 +20,7 @@
       "icon": { "id": "stop", "color": "terminal.ansiRed" }
     },
     {
-      "label": "🔑 [Auth] Login",
+      "label": "[Auth] Login",
       "detail": "Đăng nhập Docker client vào Registry cục bộ",
       "type": "shell",
       "command": "docker login localhost:5000",
@@ -29,7 +29,7 @@
       "icon": { "id": "key", "color": "terminal.ansiYellow" }
     },
     {
-      "label": "🔐 [Auth] Reset Password",
+      "label": "[Auth] Reset Password",
       "detail": "Tạo lại mật khẩu bảo vệ Registry (ghi vào file htpasswd)",
       "type": "shell",
       "command": "docker run --rm --entrypoint htpasswd httpd:2.4 -Bbn ${input:user} ${input:pass} > auth/registry.password",
@@ -38,7 +38,7 @@
       "icon": { "id": "shield", "color": "terminal.ansiYellow" }
     },
     {
-      "label": "🧹 [Maint] Garbage Collect",
+      "label": "[Docker] Garbage Collect",
       "detail": "Dọn dẹp rác hệ thống (xóa các Docker blobs mồ côi)",
       "type": "shell",
       "command": "docker exec docker-registry bin/registry garbage-collect /etc/docker/registry/config.yml",
@@ -47,7 +47,7 @@
       "icon": { "id": "trash", "color": "terminal.ansiRed" }
     },
     {
-      "label": "📜 [Logs] Open Dozzle UI",
+      "label": "[Dozzle] Open Dozzle UI",
       "detail": "Xem log các container bằng giao diện Dozzle (Web UI)",
       "type": "shell",
       "command": "start http://localhost:8888",
@@ -56,7 +56,7 @@
       "icon": { "id": "browser", "color": "terminal.ansiMagenta" }
     },
     {
-      "label": "🛡️ [SysAdmin] Setup Cockpit Firewall",
+      "label": "[Cockpit] Setup Cockpit Firewall",
       "detail": "Cấu hình tường lửa cho máy chủ quản trị Cockpit",
       "type": "shell",
       "command": "chmod +x scripts/setup-cockpit.sh && ./scripts/setup-cockpit.sh",
