@@ -1,0 +1,61 @@
+# =============================================================================
+# LaunchPad Registry Stack — n8n Workflow Automation
+# Mục tiêu: Shared automation hub (Social Media, Webhooks, etc.)
+#
+# Cách dùng:
+#   docker compose -f compose.n8n.yml up -d
+#
+# Yêu cầu: Nginx UI (compose.yml) phải đang chạy để proxy
+# =============================================================================
+
+services:
+  n8n-db:
+    image: postgres:15-alpine
+    container_name: n8n-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: ${N8N_DB_PASSWORD}
+      POSTGRES_DB: n8n
+    volumes:
+      - n8n-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  n8n:
+    image: n8nio/n8n:1.80.3
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      # Database
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=n8n-db
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD}
+      # Security
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      # Webhook URL
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-https://n8n.nhaateliertattoo.com/}
+      # Execution settings
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
+      # Timezone
+      - GENERIC_TIMEZONE=Asia/Ho_Chi_Minh
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - n8n-data:/home/node/.n8n
+    depends_on:
+      n8n-db:
+        condition: service_healthy
+
+volumes:
+  n8n-db-data:
+    name: registry_n8n-db-data
+  n8n-data:
+    name: registry_n8n-data
